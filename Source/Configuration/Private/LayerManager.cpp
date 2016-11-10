@@ -37,6 +37,7 @@ void FLayerManager::Init(){
         // Create
     //}
     TArray<uint8> BinaryArray;
+	BinaryArray.Init (0, 0);
     
     FString FilePath = FPaths::Combine(*FPaths::GamePluginsDir(), TEXT("Configuration"), TEXT("Content"), TEXT("ConfData.dat"));
     
@@ -48,15 +49,10 @@ void FLayerManager::Init(){
         if(BinaryArray.Num() > 0){
             FMemoryReader Reader = FMemoryReader(BinaryArray, true);
             
-            int64 Pos = 0;
-            
             while(!Reader.AtEnd()){
-                FMaterialLayer Layer;               
-                Layers.Add(MakeShareable(&Layer));
-                
-                Pos += sizeof(Layer);
-                
-                Reader.Seek(Pos);
+                FMaterialLayer* Layer = new FMaterialLayer;
+				Reader << *Layer;
+                Layers.Add(MakeShareable(Layer));
             }
         }
     }
@@ -97,11 +93,17 @@ void FLayerManager::Duplicate(TSharedPtr<FMaterialLayer> MaterialLayer){
 
 void FLayerManager::OnObjectModified(UObject* Object){
     if(!CurrentLayer.IsValid()){ return; }
+
+	bool IsWanted = Cast<UStaticMeshComponent> (Object) || Cast<USkeletalMeshComponent> (Object);
+
+	if (!IsWanted) { 
+		return; 
+	}
     
-    UPrimitiveComponent* Component = Cast<UPrimitiveComponent>(Object);
+	UPrimitiveComponent* Actor = Cast<UPrimitiveComponent>(Object);
     
-    if(Component){
-        CurrentLayer->Update(Component);
+    if(Actor){
+        CurrentLayer->Update(Actor);
         DisplayNotification("On Object Modify " + Object->GetName());
     }
 }

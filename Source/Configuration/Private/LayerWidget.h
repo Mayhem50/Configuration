@@ -24,11 +24,11 @@ public:
     FReply OnAddButtonPressed();
     FReply OnRemoveButtonPressed();
     FReply OnDuplicateButtonPressed();
-    FReply OnSave();
-    
-    void OnSelectionChanged(TSharedPtr<FMaterialLayer> Item, ESelectInfo::Type SelectionType);
-    
-    void OnTextChanged(const FText& InText);
+    FReply OnSave();    
+	FReply OnToggleLayerVisibility (TSharedPtr<FMaterialLayer> Item);
+
+    void OnSelectionChanged(TSharedPtr<FMaterialLayer> Item, ESelectInfo::Type SelectionType);    
+    void OnTextChanged(const FText& InText, TSharedPtr<FMaterialLayer> Item);
     
     TSharedRef<ITableRow> OnGenerateRowForList(TSharedPtr<FMaterialLayer> Item, const TSharedRef<STableViewBase>& OwnerTable);
     

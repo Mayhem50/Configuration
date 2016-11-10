@@ -43,6 +43,8 @@ void FMaterialLayer::Update(UPrimitiveComponent* Primitive)
     if(Primitive){
         TArray<UMaterialInterface*> Materials;
         Primitive->GetUsedMaterials(Materials);
+
+		PrimitiveMaterialsMap.Add (Primitive->GetName ());
         
         for(auto Material : Materials){
             PrimitiveMaterialsMap[Primitive->GetName()].Add(GetObjPath(Material));
@@ -68,7 +70,8 @@ void FMaterialLayer::ApplyToStaticMesh(){
             UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(StaticMesh);
             
             if(Primitive){
-                TArray<UMaterialInterface*> Materials;
+				TArray<UMaterialInterface*> Materials;
+
                 for(auto MaterialPath : *Paths){
                     UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, *MaterialPath.ToString());
                     Materials.Add(Material);

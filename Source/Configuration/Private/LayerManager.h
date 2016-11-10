@@ -25,6 +25,9 @@ public:
     void OnObjectModified(UObject* Object);
     
     TArray<TSharedPtr<class FMaterialLayer>>& GetLayers() { return Layers; }
+
+	TSharedPtr<class FMaterialLayer> GetCurrentLayer () { return CurrentLayer; }
+	void SetCurentLayer (TSharedPtr<class FMaterialLayer> Layer) { CurrentLayer = Layer; }
     
     void AddLayer();
     void RemoveLayer(TSharedPtr<FMaterialLayer> MaterialLayer);
