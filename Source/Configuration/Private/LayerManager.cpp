@@ -57,7 +57,9 @@ void FLayerManager::Init(){
         }
     }
     else{
-        FFileHelper::SaveArrayToFile(BinaryArray, *FilePath);
+        AddLayer();
+        CurrentLayer = Layers[0];
+        Save();
     }
 }
 
@@ -80,7 +82,7 @@ void FLayerManager::AddLayer(){
 }
 
 void FLayerManager::RemoveLayer(TSharedPtr<FMaterialLayer> MaterialLayer){
-    if(!MaterialLayer.IsValid()){ return; }
+    if(!MaterialLayer.IsValid() || Layers.Num() == 1){ return; }
     
     Layers.Remove(MaterialLayer);
 }
@@ -106,6 +108,8 @@ void FLayerManager::OnObjectModified(UObject* Object){
         CurrentLayer->Update(Actor);
         DisplayNotification("On Object Modify " + Object->GetName());
     }
+    
+    Save();
 }
 
 void FLayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
@@ -119,6 +123,8 @@ void FLayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
         CurrentLayer->Update(Actor);
         DisplayNotification("On Apply Object On Actor " + GEditor->GetTransactionName().ToString());
     }
+    
+    Save();
 }
 
 void FLayerManager::OnObjectPropertyChanged(UObject* Object, FPropertyChangedEvent& PropertyChangedEvent)
@@ -128,6 +134,8 @@ void FLayerManager::OnObjectPropertyChanged(UObject* Object, FPropertyChangedEve
     if(PropertyName == "OverrideMaterials"){
         DisplayNotification("On Object Property Changed");
     }
+    
+    Save();
 }
 
 void FLayerManager::DisplayNotification(const FString& String) const{

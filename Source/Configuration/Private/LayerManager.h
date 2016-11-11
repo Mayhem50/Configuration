@@ -35,7 +35,6 @@ public:
     
     void Save();
     
-private:
     void DisplayNotification(const FString& String) const;
     
 private:
