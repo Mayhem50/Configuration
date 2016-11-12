@@ -24,7 +24,10 @@ public:
     void Apply();
     
     bool IsEnabled() const { return Enabled; }
-    void SetIsEnabled(bool IsEnabled) { Enabled = IsEnabled; }
+    void SetIsEnabled(bool IsEnabled) {
+        Enabled = IsEnabled;
+        OnEnabledChanged.ExecuteIfBound();
+    }
     
     FString GetName() const { return Name; }
     void SetName(const FString& InName) { Name = InName; }
@@ -32,6 +35,8 @@ public:
     TMap<FString, TArray<FName>>& GetPrimitiveToMaterialsMap() { return PrimitiveMaterialsMap; }
     void SetPrimitiveToMaterialsMap(const TMap<FString, TArray<FName>>& InMap) { PrimitiveMaterialsMap = InMap; }
     
+    DECLARE_DELEGATE(FOnEnabledChanged)
+    FOnEnabledChanged OnEnabledChanged;
     
 private:
     void ApplyToStaticMesh();

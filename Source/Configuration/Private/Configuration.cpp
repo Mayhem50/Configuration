@@ -53,10 +53,6 @@ void FConfigurationModule::StartupModule()
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
     
     OnInit();
-    
-    //FEditorDelegates::OnApplyObjectToActor.AddRaw(LayerManager.Get(), &FLayerManager::OnApplyObjectOnActor);
-    //FCoreUObjectDelegates::OnObjectPropertyChanged.AddRaw(LayerManager.Get(), &FLayerManager::OnObjectPropertyChanged);
-    
 }
 
 void FConfigurationModule::ShutdownModule()
@@ -74,7 +70,9 @@ void FConfigurationModule::OnInit(){
     LayerManager = MakeShareable(new FLayerManager);
     LayerManager->Init();
     
-    FCoreUObjectDelegates::OnObjectModified.AddRaw(LayerManager.Get(), &FLayerManager::OnObjectModified);
+    //FCoreUObjectDelegates::OnObjectModified.AddRaw(LayerManager.Get(), &FLayerManager::OnObjectModified);
+    FEditorDelegates::OnApplyObjectToActor.AddRaw(LayerManager.Get(), &FLayerManager::OnApplyObjectOnActor);
+    FCoreUObjectDelegates::OnObjectPropertyChanged.AddRaw(LayerManager.Get(), &FLayerManager::OnObjectPropertyChanged);
 }
 
 TSharedRef<SDockTab> FConfigurationModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)

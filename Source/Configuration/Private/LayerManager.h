@@ -24,6 +24,8 @@ public:
     void OnObjectPropertyChanged(UObject* Object, FPropertyChangedEvent& PropertyChangedEvent);
     void OnObjectModified(UObject* Object);
     
+    void OnLayerEnabledChanged();
+    
     TArray<TSharedPtr<class FMaterialLayer>>& GetLayers() { return Layers; }
 
 	TSharedPtr<class FMaterialLayer> GetCurrentLayer () { return CurrentLayer; }
@@ -40,7 +42,6 @@ public:
 private:
     TArray<TSharedPtr<class FMaterialLayer>> Layers;
     TSharedPtr<class FMaterialLayer> CurrentLayer;
-    //ULayers Layers;
 };
 
 #endif /* LayerManager_h */

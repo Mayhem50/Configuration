@@ -51,7 +51,8 @@ void FLayerManager::Init(){
             
             while(!Reader.AtEnd()){
                 FMaterialLayer* Layer = new FMaterialLayer;
-				Reader << *Layer;
+                Reader << *Layer;
+                Layer->OnEnabledChanged.BindRaw(this, &FLayerManager::OnLayerEnabledChanged);
                 Layers.Add(MakeShareable(Layer));
             }
         }
@@ -78,7 +79,9 @@ void FLayerManager::Save(){
 }
 
 void FLayerManager::AddLayer(){
-    Layers.Add(MakeShareable(new FMaterialLayer("Layer_" + FString::FromInt(Layers.Num()))));
+    TSharedPtr<FMaterialLayer> Layer = MakeShareable(new FMaterialLayer("Layer_" + FString::FromInt(Layers.Num())));
+    Layer->OnEnabledChanged.BindRaw(this, &FLayerManager::OnLayerEnabledChanged);
+    Layers.Add(Layer);
 }
 
 void FLayerManager::RemoveLayer(TSharedPtr<FMaterialLayer> MaterialLayer){
@@ -99,7 +102,7 @@ void FLayerManager::OnObjectModified(UObject* Object){
 	bool IsWanted = Cast<UStaticMeshComponent> (Object) || Cast<USkeletalMeshComponent> (Object);
 
 	if (!IsWanted) { 
-		return; 
+		return;
 	}
     
 	UPrimitiveComponent* Actor = Cast<UPrimitiveComponent>(Object);
@@ -110,6 +113,14 @@ void FLayerManager::OnObjectModified(UObject* Object){
     }
     
     Save();
+}
+
+void FLayerManager::OnLayerEnabledChanged(){
+    for(TSharedPtr<FMaterialLayer> Layer : Layers){
+        if(Layer->IsEnabled()){
+            Layer->Apply();
+        }
+    }
 }
 
 void FLayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)

@@ -10,6 +10,8 @@
 
 #include "MaterialLayer.h"
 #include "EngineUtils.h"
+#include "LevelEditor.h"
+#include "SLevelViewport.h"
 
 #include "Tools.h"
 
@@ -35,7 +37,19 @@ TSharedPtr<FMaterialLayer> FMaterialLayer::Clone(){
 
 void FMaterialLayer::Update(AActor* Actor)
 {
-    Update(Cast<UPrimitiveComponent>(Actor));
+    AStaticMeshActor* StaticMeshActor = Cast<AStaticMeshActor>(Actor);
+    
+    if(StaticMeshActor){
+        UStaticMeshComponent* Component = StaticMeshActor->GetStaticMeshComponent();
+        TArray<UMaterialInterface*> Materials;
+        Component->GetUsedMaterials(Materials);
+        
+        PrimitiveMaterialsMap.Add (StaticMeshActor->GetName ());
+        
+        for(auto Material : Materials){
+            PrimitiveMaterialsMap[StaticMeshActor->GetName()].Add(GetObjPath(Material));
+        }
+    }
 }
 
 void FMaterialLayer::Update(UPrimitiveComponent* Primitive)
@@ -54,15 +68,26 @@ void FMaterialLayer::Update(UPrimitiveComponent* Primitive)
 
 void FMaterialLayer::Apply()
 {
+    for(auto Tuple : PrimitiveMaterialsMap){
+        UE_LOG(LogTemp, Warning, TEXT("Actor Name is %s: "), *Tuple.Key);
+        
+        for(FName Material : Tuple.Value)
+            UE_LOG(LogTemp, Warning, TEXT("Material Path is %s: "), *Material.ToString());
+    }
+    
     ApplyToStaticMesh();
     ApplyToSkeletalMesh();
 }
 
 void FMaterialLayer::ApplyToStaticMesh(){
-    TActorIterator< AStaticMeshActor > ActorItr = TActorIterator< AStaticMeshActor >(GEditor->GetWorld());
+    FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+    TSharedPtr<SLevelViewport> Viewport = StaticCastSharedPtr<SLevelViewport>(LevelEditorModule.GetFirstActiveViewport());
+    
+    TActorIterator< AStaticMeshActor > ActorItr = TActorIterator< AStaticMeshActor >(Viewport->GetWorld());
     
     while (ActorItr)
     {
+        UE_LOG(LogTemp, Warning, TEXT("Actor Name is %s: "), *ActorItr->GetName());
         TArray<FName>* Paths = PrimitiveMaterialsMap.Find(ActorItr->GetName());
         
         if(Paths){
@@ -86,7 +111,10 @@ void FMaterialLayer::ApplyToStaticMesh(){
 }
 
 void FMaterialLayer::ApplyToSkeletalMesh(){
-    TActorIterator< ASkeletalMeshActor > ActorItr = TActorIterator< ASkeletalMeshActor >(GEditor->GetWorld());
+    FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+    TSharedPtr<SLevelViewport> Viewport = StaticCastSharedPtr<SLevelViewport>(LevelEditorModule.GetFirstActiveViewport());
+    
+    TActorIterator< ASkeletalMeshActor > ActorItr = TActorIterator< ASkeletalMeshActor >(Viewport->GetWorld());
     
     while (ActorItr)
     {
