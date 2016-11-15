@@ -16,26 +16,17 @@
 #include "EditorUndoClient.h"
 
 
-FLayerManager::FLayerManager()
+ULayerManager::ULayerManager()
 {
-    //MaterialLayer = MakeShareable(new FMaterialLayer);
+	Layers.Init (nullptr, 0);
 }
 
-FLayerManager::~FLayerManager()
+ULayerManager::~ULayerManager()
 {
     
 }
 
-void FLayerManager::Init(){    
-    //ULayers* _DataAsset = LoadObject<ULayers>(nullptr, TEXT("Configuration/Content/Layers.Layers"));
-    
-    //if(_DataAsset){
-        // Load
-        //Layers = TWeakObjectPtr<ULayers>(_DataAsset);
-    //}
-    //else{
-        // Create
-    //}
+void ULayerManager::Init(){   
     TArray<uint8> BinaryArray;
 	BinaryArray.Init (0, 0);
     
@@ -50,10 +41,11 @@ void FLayerManager::Init(){
             FMemoryReader Reader = FMemoryReader(BinaryArray, true);
             
             while(!Reader.AtEnd()){
-                FMaterialLayer* Layer = new FMaterialLayer;
+                UMaterialLayer* Layer = NewObject<UMaterialLayer>();
                 Reader << *Layer;
-                Layer->OnEnabledChanged.BindRaw(this, &FLayerManager::OnLayerEnabledChanged);
-                Layers.Add(MakeShareable(Layer));
+				//Layer->Serialize (Reader);
+                Layer->OnEnabledChanged.BindUObject (this, &ULayerManager::OnLayerEnabledChanged);
+                Layers.Add(Layer);
             }
         }
     }
@@ -64,11 +56,12 @@ void FLayerManager::Init(){
     }
 }
 
-void FLayerManager::Save(){
+void ULayerManager::Save(){
     FBufferArchive BufferArchive;
     
     for(auto Layer : Layers){
-        BufferArchive << *Layer.Get();
+        BufferArchive << *Layer;
+		//Layer->Serialize (BufferArchive);
     }
     
     if(BufferArchive.Num() > 0){
@@ -78,28 +71,29 @@ void FLayerManager::Save(){
     }
 }
 
-void FLayerManager::AddLayer(){
-    TSharedPtr<FMaterialLayer> Layer = MakeShareable(new FMaterialLayer("Layer_" + FString::FromInt(Layers.Num())));
-    Layer->OnEnabledChanged.BindRaw(this, &FLayerManager::OnLayerEnabledChanged);
+void ULayerManager::AddLayer(){
+    UMaterialLayer* Layer = NewObject<UMaterialLayer>();
+	Layer->Init (ELayerEnum::MATERIAL, "Layer_" + FString::FromInt (Layers.Num ()));
+    Layer->OnEnabledChanged.BindUObject(this, &ULayerManager::OnLayerEnabledChanged);
     Layers.Add(Layer);
 }
 
-void FLayerManager::RemoveLayer(TSharedPtr<FMaterialLayer> MaterialLayer){
-    if(!MaterialLayer.IsValid() || Layers.Num() == 1){ return; }
+void ULayerManager::RemoveLayer(UMaterialLayer* MaterialLayer){
+    if(MaterialLayer == nullptr || Layers.Num() == 1){ return; }
     
     Layers.Remove(MaterialLayer);
 }
 
-void FLayerManager::Duplicate(TSharedPtr<FMaterialLayer> MaterialLayer){
-    if(!MaterialLayer.IsValid()){ return; }
+void ULayerManager::Duplicate(UMaterialLayer* MaterialLayer){
+    if(!MaterialLayer){ return; }
     
     Layers.Add(MaterialLayer->Clone());
 }
 
-void FLayerManager::OnObjectModified(UObject* Object){
-    if(!CurrentLayer.IsValid()){ return; }
+void ULayerManager::OnObjectModified(UObject* Object){
+    if(!CurrentLayer){ return; }
 
-	bool IsWanted = Cast<UStaticMeshComponent> (Object) || Cast<USkeletalMeshComponent> (Object);
+	bool IsWanted = Cast<AStaticMeshActor> (Object) || Cast<ASkeletalMeshActor> (Object);
 
 	if (!IsWanted) { 
 		return;
@@ -115,17 +109,17 @@ void FLayerManager::OnObjectModified(UObject* Object){
     Save();
 }
 
-void FLayerManager::OnLayerEnabledChanged(){
-    for(TSharedPtr<FMaterialLayer> Layer : Layers){
+void ULayerManager::OnLayerEnabledChanged(){
+    for(UMaterialLayer* Layer : Layers){
         if(Layer->IsEnabled()){
             Layer->Apply();
         }
     }
 }
 
-void FLayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
+void ULayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
 {
-    if(!CurrentLayer.IsValid()){ return; }
+    if(!CurrentLayer){ return; }
     
     UMaterialInterface* Material = Cast<UMaterialInterface>(Object);
     
@@ -138,7 +132,7 @@ void FLayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
     Save();
 }
 
-void FLayerManager::OnObjectPropertyChanged(UObject* Object, FPropertyChangedEvent& PropertyChangedEvent)
+void ULayerManager::OnObjectPropertyChanged(UObject* Object, FPropertyChangedEvent& PropertyChangedEvent)
 {
     FName PropertyName = (PropertyChangedEvent.Property != nullptr) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
     
@@ -149,7 +143,7 @@ void FLayerManager::OnObjectPropertyChanged(UObject* Object, FPropertyChangedEve
     Save();
 }
 
-void FLayerManager::DisplayNotification(const FString& String) const{
+void ULayerManager::DisplayNotification(const FString& String) const{
     FNotificationInfo Info(FText::FromString(String));
     Info.FadeInDuration = 0.1f;
     Info.FadeOutDuration = 0.5f;

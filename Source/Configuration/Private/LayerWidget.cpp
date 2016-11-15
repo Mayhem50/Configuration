@@ -45,7 +45,7 @@ void SLayersWidget::Construct(const SLayersWidget::FArguments &Args){
       
       +SScrollBox::Slot()
       [
-       SAssignNew(ListViewWidget, SListView<TSharedPtr<FMaterialLayer>>)
+       SAssignNew(ListViewWidget, SListView<UMaterialLayer*>)
        .ItemHeight(24)
        .ListItemsSource(&(LayerManager->GetLayers()))
        .OnGenerateRow(this, &SLayersWidget::OnGenerateRowForList)
@@ -72,7 +72,7 @@ void SLayersWidget::Construct(const SLayersWidget::FArguments &Args){
      
      ];
     
-    if (LayerManager->GetCurrentLayer ().IsValid ())
+    if (LayerManager->GetCurrentLayer ())
     {
         ListViewWidget->SetSelection (LayerManager->GetCurrentLayer (), ESelectInfo::Direct);
     }
@@ -85,8 +85,8 @@ FReply SLayersWidget::OnAddButtonPressed(){
     return FReply::Handled();
 }
 
-FReply SLayersWidget::OnRemoveButtonPressed(TSharedPtr<FMaterialLayer> Layer){
-    if(Layer.IsValid()){
+FReply SLayersWidget::OnRemoveButtonPressed(UMaterialLayer* Layer){
+    if(Layer){
         LayerManager->RemoveLayer(Layer);
         ListViewWidget->SetSelection(LayerManager->GetLayers().Last(), ESelectInfo::Direct);
         ListViewWidget->RequestListRefresh();
@@ -106,29 +106,29 @@ FReply SLayersWidget::OnSave(){
     return FReply::Handled();
 }
 
-TSharedRef<ITableRow> SLayersWidget::OnGenerateRowForList(TSharedPtr<FMaterialLayer> Item, const TSharedRef<STableViewBase> &OwnerTable){    
+TSharedRef<ITableRow> SLayersWidget::OnGenerateRowForList(UMaterialLayer* Item, const TSharedRef<STableViewBase> &OwnerTable){    
     return
     SNew(SLayerRowWidget, OwnerTable, Item).LayersWidget(this);
 }
 
-void SLayersWidget::OnSelectionChanged(TSharedPtr<FMaterialLayer> Item, ESelectInfo::Type SelectionType){
+void SLayersWidget::OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type SelectionType){
     SelectedMaterialLayer = Item;
     
-    if(!SelectedMaterialLayer.IsValid()){ return; }
+    if(!SelectedMaterialLayer){ return; }
     LayerManager->SetCurentLayer (SelectedMaterialLayer);
 }
 
-void SLayersWidget::OnTextChanged(const FText &InText, TSharedPtr<FMaterialLayer> Item){
+void SLayersWidget::OnTextChanged(const FText &InText, UMaterialLayer* Item){
     SelectedMaterialLayer = Item;
     
-    if(!Item.IsValid()){ return; }
+    if(!Item){ return; }
     
-    Item->SetName(InText.ToString());
+    Item->LayerName = InText.ToString ();
 }
 
-FReply SLayersWidget::OnToggleLayerVisibility (TSharedPtr<FMaterialLayer> Item)
+FReply SLayersWidget::OnToggleLayerVisibility (UMaterialLayer* Item)
 {
-    Item->SetIsEnabled (!Item->IsEnabled ());
+    Item->SetEnabled (!Item->IsEnabled ());
     ListViewWidget->RebuildList ();
     return FReply::Handled ();
 }

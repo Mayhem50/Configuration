@@ -15,27 +15,26 @@
 
 #include "Tools.h"
 
-FMaterialLayer::FMaterialLayer(const FString& InName):
-Enabled(true),
-Name(InName)
+UMaterialLayer::UMaterialLayer(const FObjectInitializer& ObjectInitializer):
+Super(ObjectInitializer)
 {
     
 }
 
-FMaterialLayer::~FMaterialLayer()
+UMaterialLayer::~UMaterialLayer()
 {
     
 }
 
-TSharedPtr<FMaterialLayer> FMaterialLayer::Clone(){
-    TSharedPtr<FMaterialLayer> NewMaterialLayer = MakeShareable(new FMaterialLayer);
+UMaterialLayer* UMaterialLayer::Clone(){
+    UMaterialLayer* NewMaterialLayer = NewObject<UMaterialLayer>();
     NewMaterialLayer->PrimitiveMaterialsMap = PrimitiveMaterialsMap;
-    NewMaterialLayer->Name = Name + "_";
+    NewMaterialLayer->LayerName = LayerName + "_";
     
     return NewMaterialLayer;
 }
 
-void FMaterialLayer::Update(AActor* Actor)
+void UMaterialLayer::Update(AActor* Actor)
 {
     AStaticMeshActor* StaticMeshActor = Cast<AStaticMeshActor>(Actor);
     
@@ -52,7 +51,7 @@ void FMaterialLayer::Update(AActor* Actor)
     }
 }
 
-void FMaterialLayer::Update(UPrimitiveComponent* Primitive)
+void UMaterialLayer::Update(UPrimitiveComponent* Primitive)
 {
     if(Primitive){
         TArray<UMaterialInterface*> Materials;
@@ -66,7 +65,7 @@ void FMaterialLayer::Update(UPrimitiveComponent* Primitive)
     }
 }
 
-void FMaterialLayer::Apply()
+void UMaterialLayer::Apply()
 {
     for(auto Tuple : PrimitiveMaterialsMap){
         UE_LOG(LogTemp, Warning, TEXT("Actor Name is %s: "), *Tuple.Key);
@@ -79,7 +78,7 @@ void FMaterialLayer::Apply()
     ApplyToSkeletalMesh();
 }
 
-void FMaterialLayer::ApplyToStaticMesh(){
+void UMaterialLayer::ApplyToStaticMesh(){
     FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
     TSharedPtr<SLevelViewport> Viewport = StaticCastSharedPtr<SLevelViewport>(LevelEditorModule.GetFirstActiveViewport());
     
@@ -110,7 +109,7 @@ void FMaterialLayer::ApplyToStaticMesh(){
     }
 }
 
-void FMaterialLayer::ApplyToSkeletalMesh(){
+void UMaterialLayer::ApplyToSkeletalMesh(){
     FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
     TSharedPtr<SLevelViewport> Viewport = StaticCastSharedPtr<SLevelViewport>(LevelEditorModule.GetFirstActiveViewport());
     
@@ -140,27 +139,10 @@ void FMaterialLayer::ApplyToSkeletalMesh(){
     
 }
 
-void FMaterialLayer::ApplyToPrimitiveComponent(UPrimitiveComponent* Primitive, const TArray<UMaterialInterface*> Materials){
+void UMaterialLayer::ApplyToPrimitiveComponent(UPrimitiveComponent* Primitive, const TArray<UMaterialInterface*> Materials){
     for(int idx = 0; idx < Materials.Num(); ++idx){
         Primitive->SetMaterial(idx, Materials[idx]);
     }
-}
-
-FORCEINLINE FArchive& operator<<(FArchive &Ar, FMaterialLayer &MaterialLayer){
-    FString Name = MaterialLayer.GetName();
-    bool Enabled = MaterialLayer.IsEnabled();
-    TMap<FString, TArray<FName>> PrimitiveToMaterialsMap = MaterialLayer.GetPrimitiveToMaterialsMap();
-    
-    Ar << Name;
-    Ar << Enabled;
-    Ar << PrimitiveToMaterialsMap;
-    
-    MaterialLayer.SetName(Name);
-    MaterialLayer.SetIsEnabled(Enabled);
-    MaterialLayer.SetPrimitiveToMaterialsMap(PrimitiveToMaterialsMap);
-    
-    
-    return Ar;
 }
 
 

@@ -15,47 +15,47 @@ class SLayersWidget : public SCompoundWidget{
 public:
     SLATE_BEGIN_ARGS(SLayersWidget) {}
     
-    SLATE_ARGUMENT(TSharedPtr<class FLayerManager>, LayerManager)
+    SLATE_ARGUMENT(class ULayerManager*, LayerManager)
     
     SLATE_END_ARGS()
     
     void Construct(const FArguments& Args);
     
     FReply OnAddButtonPressed();
-    FReply OnRemoveButtonPressed(TSharedPtr<FMaterialLayer> Item);
+    FReply OnRemoveButtonPressed(UMaterialLayer* Item);
     FReply OnDuplicateButtonPressed();
     FReply OnSave();    
-	FReply OnToggleLayerVisibility (TSharedPtr<FMaterialLayer> Item);
+	FReply OnToggleLayerVisibility (UMaterialLayer* Item);
 
-    void OnSelectionChanged(TSharedPtr<FMaterialLayer> Item, ESelectInfo::Type SelectionType);    
-    void OnTextChanged(const FText& InText, TSharedPtr<FMaterialLayer> Item);
+    void OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type SelectionType);    
+    void OnTextChanged(const FText& InText, UMaterialLayer* Item);
     
-    TSharedRef<ITableRow> OnGenerateRowForList(TSharedPtr<FMaterialLayer> Item, const TSharedRef<STableViewBase>& OwnerTable);
-    
-private:
-    TSharedPtr<class SWidget> ComputeVisibilityIcon(TSharedPtr<class FMaterialLayer> Layer);
+    TSharedRef<ITableRow> OnGenerateRowForList(UMaterialLayer* Item, const TSharedRef<STableViewBase>& OwnerTable);
     
 private:
-    TSharedPtr<FLayerManager> LayerManager;
-    TSharedPtr<SListView<TSharedPtr<FMaterialLayer>>> ListViewWidget;
+    TSharedPtr<class SWidget> ComputeVisibilityIcon(class UMaterialLayer* Layer);
     
-    TSharedPtr<FMaterialLayer> SelectedMaterialLayer;
+private:
+    ULayerManager* LayerManager;
+    TSharedPtr<SListView<UMaterialLayer*>> ListViewWidget;
+    
+    UMaterialLayer* SelectedMaterialLayer;
     
     TSharedPtr<SEditableText> EditableText;
 };
 
-class SLayerRowWidget : public SMultiColumnTableRow<TSharedPtr<FMaterialLayer>>
+class SLayerRowWidget : public SMultiColumnTableRow<UMaterialLayer*>
 {
 public:
     SLATE_BEGIN_ARGS(SLayerRowWidget){}
     SLATE_ARGUMENT(class SLayersWidget*, LayersWidget)
     SLATE_END_ARGS()
     
-    void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, TSharedPtr<FMaterialLayer> InItem)
+    void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, UMaterialLayer* InItem)
     {
         LayersWidget = InArgs._LayersWidget;
         Item = InItem;
-        SMultiColumnTableRow<TSharedPtr<FMaterialLayer>>::Construct(FSuperRowType::FArguments(), InOwnerTable);
+        SMultiColumnTableRow<UMaterialLayer*>::Construct(FSuperRowType::FArguments(), InOwnerTable);
     }
     
     TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName)
@@ -65,7 +65,7 @@ public:
         if (ColumnName == "Name")
         {
             return SNew(SEditableText)
-            .Text (FText::FromString (Item->GetName ()))
+            .Text (FText::FromString (Item->LayerName))
             .OnTextChanged(FOnTextChanged::CreateRaw (LayersWidget, &SLayersWidget::OnTextChanged, Item));
         }
         else if (ColumnName == "Visibility")
@@ -121,7 +121,7 @@ public:
         }
     }
     
-    TSharedPtr<FMaterialLayer> Item;
+    UMaterialLayer* Item;
     SLayersWidget* LayersWidget;
 };
 

@@ -6,7 +6,7 @@
 
 class FToolBarBuilder;
 class FMenuBuilder;
-class FMaterialLayer;
+class UMaterialLayer;
 
 class FConfigurationModule : public IModuleInterface
 {
@@ -31,5 +31,5 @@ private:
 private:
 	TSharedPtr<class FUICommandList> PluginCommands;
     
-    TSharedPtr<class FLayerManager> LayerManager;
+    class ULayerManager* LayerManager;
 };

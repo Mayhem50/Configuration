@@ -6,17 +6,19 @@
 //  Copyright © 2016 Epic Games, Inc. All rights reserved.
 //
 
-#ifndef LayerManager_h
-#define LayerManager_h
+#pragma once
 
-class FMaterialLayer;
-class ULayers;
 
-class FLayerManager : public TSharedFromThis<FLayerManager>
+#include "LayerManager.generated.h"
+
+UCLASS()
+class CONFIGURATION_API ULayerManager : public UObject
 {
+	GENERATED_BODY()
+
 public:
-    FLayerManager();
-    ~FLayerManager();
+    ULayerManager();
+    ~ULayerManager();
     
     void Init();
     
@@ -26,22 +28,23 @@ public:
     
     void OnLayerEnabledChanged();
     
-    TArray<TSharedPtr<class FMaterialLayer>>& GetLayers() { return Layers; }
+    TArray<class UMaterialLayer*>& GetLayers() { return Layers; }
 
-	TSharedPtr<class FMaterialLayer> GetCurrentLayer () { return CurrentLayer; }
-	void SetCurentLayer (TSharedPtr<class FMaterialLayer> Layer) { CurrentLayer = Layer; }
+	class UMaterialLayer* GetCurrentLayer () { return CurrentLayer; }
+	void SetCurentLayer (class UMaterialLayer* Layer) { CurrentLayer = Layer; }
     
     void AddLayer();
-    void RemoveLayer(TSharedPtr<FMaterialLayer> MaterialLayer);
-    void Duplicate(TSharedPtr<FMaterialLayer> MaterialLayer);
+    void RemoveLayer(class UMaterialLayer* MaterialLayer);
+    void Duplicate(class UMaterialLayer* MaterialLayer);
     
     void Save();
     
     void DisplayNotification(const FString& String) const;
     
 private:
-    TArray<TSharedPtr<class FMaterialLayer>> Layers;
-    TSharedPtr<class FMaterialLayer> CurrentLayer;
-};
+	UPROPERTY()
+		TArray<class UMaterialLayer*> Layers;
 
-#endif /* LayerManager_h */
+	UPROPERTY()
+		class UMaterialLayer* CurrentLayer;
+};

@@ -67,12 +67,13 @@ void FConfigurationModule::ShutdownModule()
 }
 
 void FConfigurationModule::OnInit(){    
-    LayerManager = MakeShareable(new FLayerManager);
+    LayerManager = NewObject<ULayerManager>();
+	LayerManager->AddToRoot ();
     LayerManager->Init();
     
-    //FCoreUObjectDelegates::OnObjectModified.AddRaw(LayerManager.Get(), &FLayerManager::OnObjectModified);
-    FEditorDelegates::OnApplyObjectToActor.AddRaw(LayerManager.Get(), &FLayerManager::OnApplyObjectOnActor);
-    FCoreUObjectDelegates::OnObjectPropertyChanged.AddRaw(LayerManager.Get(), &FLayerManager::OnObjectPropertyChanged);
+    //FCoreUObjectDelegates::OnObjectModified.AddRaw(LayerManager, &ULayerManager::OnObjectModified);
+    FEditorDelegates::OnApplyObjectToActor.AddUObject (LayerManager, &ULayerManager::OnApplyObjectOnActor);
+    FCoreUObjectDelegates::OnObjectPropertyChanged.AddUObject (LayerManager, &ULayerManager::OnObjectPropertyChanged);
 }
 
 TSharedRef<SDockTab> FConfigurationModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
