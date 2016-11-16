@@ -40,9 +40,11 @@ public class Configuration : ModuleRules
 				"UnrealEd",
 				"LevelEditor",
 				"CoreUObject",
-				"Engine",
+                "InputCore",
+                "Engine",
 				"Slate",
 				"SlateCore",
+                "ContentBrowser",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

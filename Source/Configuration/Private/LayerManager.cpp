@@ -18,6 +18,8 @@
 
 #include "EditorUndoClient.h"
 
+#include "InputCoreTypes.h"
+
 
 ULayerManager::ULayerManager()
 {
@@ -48,7 +50,7 @@ void ULayerManager::Init(){
                 UMaterialLayer* Layer = NewObject<UMaterialLayer>();
                 Reader << *Layer;
 				//Layer->Serialize (Reader);
-                Layer->OnEnabledChanged.BindUObject (this, &ULayerManager::OnLayerEnabledChanged);
+                //Layer->OnEnabledChanged.BindUObject (this, &ULayerManager::OnLayerEnabledChanged);
                 Layers.Add(Layer);
             }
 
@@ -128,7 +130,7 @@ void ULayerManager::Save(){
 void ULayerManager::AddLayer(){
     UMaterialLayer* Layer = NewObject<UMaterialLayer>();
 	Layer->Init (ELayerEnum::MATERIAL, "Layer_" + FString::FromInt (Layers.Num ()));
-    Layer->OnEnabledChanged.BindUObject(this, &ULayerManager::OnLayerEnabledChanged);
+    //Layer->OnEnabledChanged.BindUObject(this, &ULayerManager::OnLayerEnabledChanged);
     Layers.Add(Layer);
 }
 
@@ -164,16 +166,25 @@ void ULayerManager::OnObjectModified(UObject* Object){
 }
 
 void ULayerManager::OnLayerEnabledChanged(){
-    for(UMaterialLayer* Layer : Layers){
-        if(Layer->IsEnabled()){
-            Layer->Apply();
-        }
-    }
+	ApplyDisplayedLayers ();
+}
+
+void ULayerManager::ApplyDisplayedLayers ()
+{
+	for (UMaterialLayer* Layer : Layers)
+	{
+		if (Layer->IsEnabled ())
+		{
+			Layer->Apply ();
+		}
+	}
 }
 
 void ULayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
 {
-    if(!CurrentLayer){ return; }
+    if(!CurrentLayer){ return; }	
+
+	ShouldCreateLayer ();
     
     UMaterialInterface* Material = Cast<UMaterialInterface>(Object);
     
@@ -186,9 +197,22 @@ void ULayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
     Save();
 }
 
+void ULayerManager::ShouldCreateLayer ()
+{
+	FModifierKeysState KeysState = FSlateApplication::Get ().GetModifierKeys ();
+
+	if (KeysState.IsControlDown ())
+	{
+		AddLayer ();
+		CurrentLayer = Layers.Last ();
+	}
+}
+
 void ULayerManager::OnObjectPropertyChanged(UObject* Object, FPropertyChangedEvent& PropertyChangedEvent)
 {
     FName PropertyName = (PropertyChangedEvent.Property != nullptr) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+
+	ShouldCreateLayer ();
     
     if(PropertyName == "OverrideMaterials"){
         DisplayNotification("On Object Property Changed");

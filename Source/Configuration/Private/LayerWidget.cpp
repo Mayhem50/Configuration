@@ -116,6 +116,7 @@ void SLayersWidget::OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type S
     
     if(!SelectedMaterialLayer){ return; }
     LayerManager->SetCurentLayer (SelectedMaterialLayer);
+	LayerManager->ApplyDisplayedLayers ();
 }
 
 void SLayersWidget::OnTextChanged(const FText &InText, UMaterialLayer* Item){
@@ -129,6 +130,7 @@ void SLayersWidget::OnTextChanged(const FText &InText, UMaterialLayer* Item){
 FReply SLayersWidget::OnToggleLayerVisibility (UMaterialLayer* Item)
 {
     Item->SetEnabled (!Item->IsEnabled ());
+	LayerManager->ApplyDisplayedLayers ();
     ListViewWidget->RebuildList ();
     return FReply::Handled ();
 }

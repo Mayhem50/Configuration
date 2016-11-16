@@ -19,7 +19,7 @@ static const FName ConfigurationTabName("Configuration");
 void FConfigurationModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	
+
 	FConfigurationStyle::Initialize();
 	FConfigurationStyle::ReloadTextures();
 
