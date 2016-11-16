@@ -13,6 +13,9 @@
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
+#include "LevelEditor.h"
+#include "SLevelViewport.h"
+
 #include "EditorUndoClient.h"
 
 
@@ -26,7 +29,7 @@ ULayerManager::~ULayerManager()
     
 }
 
-void ULayerManager::Init(){   
+void ULayerManager::Init(){
     TArray<uint8> BinaryArray;
 	BinaryArray.Init (0, 0);
     
@@ -35,6 +38,7 @@ void ULayerManager::Init(){
     DisplayNotification(FilePath);
     
     if(FPaths::FileExists(FilePath)){
+		Layers.Empty ();
         FFileHelper::LoadFileToArray(BinaryArray, *FilePath);
         
         if(BinaryArray.Num() > 0){
@@ -47,22 +51,72 @@ void ULayerManager::Init(){
                 Layer->OnEnabledChanged.BindUObject (this, &ULayerManager::OnLayerEnabledChanged);
                 Layers.Add(Layer);
             }
+
+			CurrentLayer = Layers.Last ();
+			Layers.RemoveAt (Layers.Num () - 1);
+
+			for (UMaterialLayer* Layer : Layers)
+			{
+				if (Layer->LayerName == CurrentLayer->LayerName)
+				{
+					CurrentLayer = Layer;
+					break;
+				}
+			}
         }
     }
     else{
         AddLayer();
         CurrentLayer = Layers[0];
+		ParseAllActors (CurrentLayer);
         Save();
     }
 }
 
+void ULayerManager::ParseAllActors (UMaterialLayer* Layer)
+{
+	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule> ("LevelEditor");
+	TSharedPtr<SLevelViewport> Viewport = StaticCastSharedPtr<SLevelViewport> (LevelEditorModule.GetFirstActiveViewport ());
+
+	TActorIterator< AStaticMeshActor > StaticMeshActorItr = TActorIterator< AStaticMeshActor > (Viewport->GetWorld ());
+
+	while (StaticMeshActorItr)
+	{
+		UE_LOG (LogTemp, Warning, TEXT ("Actor Name is %s: "), *StaticMeshActorItr->GetName ());
+
+		Layer->Update (*StaticMeshActorItr);
+
+		//next actor
+		++StaticMeshActorItr;
+	}
+
+	TActorIterator< ASkeletalMeshActor > SkeletalMeshActorItr = TActorIterator< ASkeletalMeshActor > (Viewport->GetWorld ());
+
+	while (SkeletalMeshActorItr)
+	{
+		UE_LOG (LogTemp, Warning, TEXT ("Actor Name is %s: "), *SkeletalMeshActorItr->GetName ());
+
+		Layer->Update (*SkeletalMeshActorItr);
+
+		//next actor
+		++SkeletalMeshActorItr;
+	}
+}
+
 void ULayerManager::Save(){
+	if (Layers.Num () == 0 && !CurrentLayer)
+	{
+		return;
+	}
+
     FBufferArchive BufferArchive;
     
     for(auto Layer : Layers){
         BufferArchive << *Layer;
 		//Layer->Serialize (BufferArchive);
     }
+
+	BufferArchive << *CurrentLayer;
     
     if(BufferArchive.Num() > 0){
         FString FilePath = FPaths::Combine(*FPaths::GamePluginsDir(), TEXT("Configuration"), TEXT("Content"), TEXT("ConfData.dat"));

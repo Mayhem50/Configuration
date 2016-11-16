@@ -8,7 +8,6 @@
 
 #pragma once
 
-
 #include "LayerManager.generated.h"
 
 UCLASS()
@@ -42,6 +41,8 @@ public:
     void DisplayNotification(const FString& String) const;
     
 private:
+	void ParseAllActors (class UMaterialLayer* Layer);
+
 	UPROPERTY()
 		TArray<class UMaterialLayer*> Layers;
 
