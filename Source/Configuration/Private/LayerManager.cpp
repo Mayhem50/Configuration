@@ -180,6 +180,24 @@ void ULayerManager::ApplyDisplayedLayers ()
 	}
 }
 
+bool ULayerManager::SwapMaterials (UMaterialLayer* Layer1, UMaterialLayer* Layer2)
+{
+	int32 idx1 = Layers.Find (Layer1);
+	int32 idx2 = Layers.Find (Layer2);
+
+	if (idx1 > 0 && idx2 > 0)
+	{
+		Layers[idx1] = Layer2;
+		Layers[idx2] = Layer1;
+
+		Save ();
+
+		return true;
+	}
+
+	return false;
+}
+
 void ULayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
 {
     if(!CurrentLayer){ return; }	
@@ -225,7 +243,7 @@ void ULayerManager::DisplayNotification(const FString& String) const{
     FNotificationInfo Info(FText::FromString(String));
     Info.FadeInDuration = 0.1f;
     Info.FadeOutDuration = 0.5f;
-    Info.ExpireDuration = 5.5f;
+    Info.ExpireDuration = 1.5f;
     Info.bUseThrobber = false;
     Info.bUseSuccessFailIcons = true;
     Info.bUseLargeFont = true;

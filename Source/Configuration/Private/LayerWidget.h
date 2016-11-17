@@ -10,6 +10,7 @@
 #define LayersWidget_h
 
 #include "SlateBasics.h"
+#include "SBorder.h"
 
 class SLayersWidget : public SCompoundWidget{
 public:
@@ -26,18 +27,20 @@ public:
     FReply OnDuplicateButtonPressed();
     FReply OnSave();    
 	FReply OnToggleLayerVisibility (UMaterialLayer* Item);
+	TOptional<EItemDropZone> OnCanAcceptDrop (const FDragDropEvent& DragDropEvent, EItemDropZone ItemDropZone, UMaterialLayer* Item);
 
     void OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type SelectionType);    
     void OnTextChanged(const FText& InText, UMaterialLayer* Item);
 
     TSharedRef<ITableRow> OnGenerateRowForList(UMaterialLayer* Item, const TSharedRef<STableViewBase>& OwnerTable);
     
+	TSharedPtr<SListView<UMaterialLayer*>> ListViewWidget;
+	ULayerManager* LayerManager;
+
 private:
     TSharedPtr<class SWidget> ComputeVisibilityIcon(class UMaterialLayer* Layer);
     
 private:
-    ULayerManager* LayerManager;
-    TSharedPtr<SListView<UMaterialLayer*>> ListViewWidget;
     
     UMaterialLayer* SelectedMaterialLayer;
     
@@ -47,11 +50,15 @@ private:
 class SLayerRowWidget : public SMultiColumnTableRow<UMaterialLayer*>
 {
 public:
-    SLATE_BEGIN_ARGS(SLayerRowWidget){}
-    SLATE_ARGUMENT(class SLayersWidget*, LayersWidget)
+	SLATE_BEGIN_ARGS (SLayerRowWidget)
+	{}
+	SLATE_ARGUMENT (class SLayersWidget*, LayersWidget)
     SLATE_END_ARGS()
 
 	virtual FReply OnDragDetected (const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	virtual void OnDragEnter (const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
+	virtual void OnDragLeave (const FDragDropEvent& DragDropEvent) override;
+	FReply OnDrop (const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
     
     void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, UMaterialLayer* InItem)
     {
@@ -59,6 +66,14 @@ public:
         Item = InItem;
         SMultiColumnTableRow<UMaterialLayer*>::Construct(FSuperRowType::FArguments(), InOwnerTable);
     }
+
+	TSharedRef< STableViewBase > GetOwnerTable ()
+	{
+		TSharedPtr< ITypedTableView<UMaterialLayer*> > OwnerWidget = OwnerTablePtr.Pin ();
+		check (OwnerWidget.IsValid ());
+
+		return StaticCastSharedPtr< SListView<UMaterialLayer*> > (OwnerWidget).ToSharedRef ();
+	}
     
     TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName)
     {
@@ -123,6 +138,7 @@ public:
         }
     }
     
+	FLinearColor OldColor;
     UMaterialLayer* Item;
     SLayersWidget* LayersWidget;
 };

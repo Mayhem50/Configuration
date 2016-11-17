@@ -42,6 +42,8 @@ public:
     void Duplicate(class UMaterialLayer* MaterialLayer);
     
     void Save();
+
+	bool SwapMaterials (UMaterialLayer* Layer1, UMaterialLayer* Layer2);
     
 	void DisplayNotification (const FString& String) const;
 

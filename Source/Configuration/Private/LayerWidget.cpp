@@ -106,10 +106,10 @@ FReply SLayersWidget::OnSave(){
     return FReply::Handled();
 }
 
-TSharedRef<ITableRow> SLayersWidget::OnGenerateRowForList(UMaterialLayer* Item, const TSharedRef<STableViewBase> &OwnerTable){    
-    return
-    SNew(SLayerRowWidget, OwnerTable, Item)
-		.LayersWidget(this);
+TSharedRef<ITableRow> SLayersWidget::OnGenerateRowForList(UMaterialLayer* Item, const TSharedRef<STableViewBase> &OwnerTable){  
+	return
+		SNew (SLayerRowWidget, OwnerTable, Item)
+		.LayersWidget (this);
 }
 
 void SLayersWidget::OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type SelectionType){
@@ -143,6 +143,49 @@ FReply SLayerRowWidget::OnDragDetected (const FGeometry& MyGeometry, const FPoin
 	return FReply::Handled ().BeginDragDrop(Operation);
 }
 
+void SLayerRowWidget::OnDragEnter (const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
+{
+	TSharedPtr<FListItemDragDropOpertation> DragDropOperation = DragDropEvent.GetOperationAs<FListItemDragDropOpertation> ();
+
+	if (DragDropOperation.IsValid ())
+	{
+		this->OnMouseEnter(MyGeometry, DragDropEvent);
+		return;
+	}
+}
+
+FReply SLayerRowWidget::OnDrop (const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
+{
+	TSharedPtr<FListItemDragDropOpertation> DragDropOperation = DragDropEvent.GetOperationAs<FListItemDragDropOpertation> ();
+
+	if (DragDropOperation.IsValid ())
+	{
+		if (LayersWidget->LayerManager->SwapMaterials (this->Item, DragDropOperation->OriginWidget->Item))
+		{
+			LayersWidget->LayerManager->ApplyDisplayedLayers ();
+			LayersWidget->ListViewWidget->RebuildList ();
+		}
+
+		return FReply::Handled ();
+	}
+	else
+	{
+		return FReply::Unhandled ();
+	}
+}
+
+void SLayerRowWidget::OnDragLeave (const FDragDropEvent& DragDropEvent)
+{
+	TSharedPtr<FListItemDragDropOpertation> DragDropOperation = DragDropEvent.GetOperationAs<FListItemDragDropOpertation> ();
+
+	if (DragDropOperation.IsValid ())
+	{
+		this->OnMouseLeave (DragDropEvent);
+		return;
+	}
+
+}
+
 void FListItemDragDropOpertation::OnDrop (bool bDropWasHandled, const FPointerEvent& MouseEvent)
 {
 	HideTrash.ExecuteIfBound ();
@@ -162,12 +205,7 @@ TSharedPtr<SWidget> FListItemDragDropOpertation::GetDefaultDecorator () const
 {
 	return SNew (SBorder).Cursor (EMouseCursor::GrabHandClosed)
 		[
-			SNew (SColorBlock)
-			.Color (FColor::Cyan)
-		.ColorIsHSV (true)
-		.IgnoreAlpha (false)
-		.ShowBackgroundForAlpha (true)
-		.UseSRGB (true)
+			OriginWidget->AsWidget ()
 		];
 }
 
