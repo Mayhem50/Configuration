@@ -108,7 +108,8 @@ FReply SLayersWidget::OnSave(){
 
 TSharedRef<ITableRow> SLayersWidget::OnGenerateRowForList(UMaterialLayer* Item, const TSharedRef<STableViewBase> &OwnerTable){    
     return
-    SNew(SLayerRowWidget, OwnerTable, Item).LayersWidget(this);
+    SNew(SLayerRowWidget, OwnerTable, Item)
+		.LayersWidget(this);
 }
 
 void SLayersWidget::OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type SelectionType){
@@ -136,7 +137,57 @@ FReply SLayersWidget::OnToggleLayerVisibility (UMaterialLayer* Item)
 }
 
 
+FReply SLayerRowWidget::OnDragDetected (const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	TSharedRef<FListItemDragDropOpertation> Operation = FListItemDragDropOpertation::New(this);
+	return FReply::Handled ().BeginDragDrop(Operation);
+}
 
+void FListItemDragDropOpertation::OnDrop (bool bDropWasHandled, const FPointerEvent& MouseEvent)
+{
+	HideTrash.ExecuteIfBound ();
+
+	FDragDropOperation::OnDrop (bDropWasHandled, MouseEvent);
+}
+
+void FListItemDragDropOpertation::OnDragged (const class FDragDropEvent& DragDropEvent)
+{
+	if (CursorDecoratorWindow.IsValid ())
+	{
+		CursorDecoratorWindow->MoveWindowTo (DragDropEvent.GetScreenSpacePosition () - BlockSize * 0.5f);
+	}
+}
+
+TSharedPtr<SWidget> FListItemDragDropOpertation::GetDefaultDecorator () const
+{
+	return SNew (SBorder).Cursor (EMouseCursor::GrabHandClosed)
+		[
+			SNew (SColorBlock)
+			.Color (FColor::Cyan)
+		.ColorIsHSV (true)
+		.IgnoreAlpha (false)
+		.ShowBackgroundForAlpha (true)
+		.UseSRGB (true)
+		];
+}
+
+TSharedRef<FListItemDragDropOpertation> FListItemDragDropOpertation::New (SLayerRowWidget* Origin, FSimpleDelegate TrashShowCallback, FSimpleDelegate TrashHideCallback, int32 OriginPosition)
+{
+	TSharedRef<FListItemDragDropOpertation> Operation = MakeShareable (new FListItemDragDropOpertation);
+
+	Operation->OriginWidget = Origin;
+	Operation->OriginBarPosition = OriginPosition;
+	Operation->ShowTrash = TrashShowCallback;
+	Operation->HideTrash = TrashHideCallback;
+	Operation->bSetForDeletion = false;
+	Operation->BlockSize = FVector2D (32, 32);
+
+	Operation->ShowTrash.ExecuteIfBound ();
+
+	Operation->Construct ();
+
+	return Operation;
+}
 
 
 

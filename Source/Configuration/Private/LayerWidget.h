@@ -29,7 +29,7 @@ public:
 
     void OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type SelectionType);    
     void OnTextChanged(const FText& InText, UMaterialLayer* Item);
-    
+
     TSharedRef<ITableRow> OnGenerateRowForList(UMaterialLayer* Item, const TSharedRef<STableViewBase>& OwnerTable);
     
 private:
@@ -50,6 +50,8 @@ public:
     SLATE_BEGIN_ARGS(SLayerRowWidget){}
     SLATE_ARGUMENT(class SLayersWidget*, LayersWidget)
     SLATE_END_ARGS()
+
+	virtual FReply OnDragDetected (const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
     
     void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, UMaterialLayer* InItem)
     {
@@ -123,6 +125,35 @@ public:
     
     UMaterialLayer* Item;
     SLayersWidget* LayersWidget;
+};
+
+class FListItemDragDropOpertation : public FDragDropOperation
+{
+public:
+	DRAG_DROP_OPERATOR_TYPE (FColorDragDrop, FDragDropOperation)
+
+	virtual void OnDrop (bool bDropWasHandled, const FPointerEvent& MouseEvent) override;
+	virtual void OnDragged (const class FDragDropEvent& DragDropEvent) override; 
+	virtual TSharedPtr<SWidget> GetDefaultDecorator () const override;
+
+	static TSharedRef<FListItemDragDropOpertation> New (SLayerRowWidget* Origin, FSimpleDelegate TrashShowCallback = FSimpleDelegate (), FSimpleDelegate TrashHideCallback = FSimpleDelegate (), int32 OriginPosition = 0);
+
+	SLayerRowWidget* OriginWidget;
+
+	/** The origin position */
+	int32 OriginBarPosition;
+
+	/** Callback to show the trash when this widget is created */
+	FSimpleDelegate ShowTrash;
+
+	/** Callback to hide the trash when this widget is dropped */
+	FSimpleDelegate HideTrash;
+
+	/** Flag which ensures that OnDrop will not replace this block in it's origin */
+	bool bSetForDeletion;
+
+	/** The size of the drag and drop color block */
+	FVector2D BlockSize;
 };
 
 #endif /* LayersWidget_h */
