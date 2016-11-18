@@ -10,6 +10,9 @@
 
 #include "LayerWidget.h"
 
+#include "Classes/Editor/Transactor.h"
+#include "ScopedTransaction.h"
+
 void SLayersWidget::Construct(const SLayersWidget::FArguments &Args){
     LayerManager = Args._LayerManager;
     
@@ -115,8 +118,12 @@ TSharedRef<ITableRow> SLayersWidget::OnGenerateRowForList(UMaterialLayer* Item, 
 void SLayersWidget::OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type SelectionType){
     SelectedMaterialLayer = Item;
     
-    if(!SelectedMaterialLayer){ return; }
-    LayerManager->SetCurentLayer (SelectedMaterialLayer);
+	if (!SelectedMaterialLayer)
+	{
+		return;
+	}
+
+	LayerManager->SetCurentLayer (SelectedMaterialLayer);    
 	LayerManager->ApplyDisplayedLayers ();
 }
 

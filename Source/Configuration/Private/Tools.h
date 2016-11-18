@@ -6,8 +6,9 @@
 //  Copyright © 2016 Epic Games, Inc. All rights reserved.
 //
 
-#ifndef Tools_h
-#define Tools_h
+#pragma once
+
+DECLARE_LOG_CATEGORY_CLASS(LogBRRPlugin, Log, All)
 
 FORCEINLINE FName GetObjPath(const UObject* Obj)
 {
@@ -30,4 +31,10 @@ FORCEINLINE FName GetObjPath(const UObject* Obj)
     
     return FName(*Str);
 }
-#endif /* Tools_h */
+
+FORCEINLINE void LogText (const FString& String)
+{
+	UE_LOG (LogBRRPlugin, Warning, TEXT ("%s"), *String);
+}
+
+void DisplayNotification (const FString& String, float Duration = 1.5f);

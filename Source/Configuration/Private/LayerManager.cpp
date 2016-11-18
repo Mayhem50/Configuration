@@ -8,22 +8,18 @@
 
 #include "ConfigurationPrivatePCH.h"
 
+#include "Tools.h"
+
 #include "LayerManager.h"
-
-#include "Framework/Notifications/NotificationManager.h"
-#include "Widgets/Notifications/SNotificationList.h"
-
 #include "LevelEditor.h"
 #include "SLevelViewport.h"
-
 #include "EditorUndoClient.h"
-
 #include "InputCoreTypes.h"
-
+#include "Classes/Editor/Transactor.h"
 
 ULayerManager::ULayerManager()
 {
-	Layers.Init (nullptr, 0);
+
 }
 
 ULayerManager::~ULayerManager()
@@ -37,7 +33,7 @@ void ULayerManager::Init(){
     
     FString FilePath = FPaths::Combine(*FPaths::GamePluginsDir(), TEXT("Configuration"), TEXT("Content"), TEXT("ConfData.dat"));
     
-    DisplayNotification(FilePath);
+	LogText (FilePath);
     
     if(FPaths::FileExists(FilePath)){
 		Layers.Empty ();
@@ -73,6 +69,67 @@ void ULayerManager::Init(){
 		ParseAllActors (CurrentLayer);
         Save();
     }
+
+	UTransBuffer* Transbuffer = Cast<UTransBuffer> (GEditor->Trans);
+
+	if (Transbuffer)
+	{
+		Transbuffer->OnUndo ().AddUObject (this, &ULayerManager::OnUndoRedo);
+		Transbuffer->OnRedo ().AddUObject (this, &ULayerManager::OnUndoRedo);
+	}
+}
+
+void ULayerManager::OnUndoRedo (FUndoSessionContext Context, bool bCanRedo)
+{
+	if(Context.PrimaryObject)
+		LogText (Context.PrimaryObject->GetName ());
+
+	LogText (Context.Title.ToString() + " " + Context.Context);
+
+	UTransBuffer* Transbuffer = Cast<UTransBuffer> (GEditor->Trans);
+	int32 UndoCount = Transbuffer->GetUndoCount ();
+	const FTransaction* Transaction = Transbuffer->GetTransaction (Transbuffer->UndoBuffer.Num () - UndoCount);
+
+	if (!Transaction)
+	{
+		return;
+	}
+
+	TArray<UObject*> Objects;
+	Transaction->GetTransactionObjects (Objects);
+
+	for (UObject* Object : Objects)
+	{
+		UObject* Outer = Object->GetOuter ();
+
+		if (Outer)
+		{
+			AStaticMeshActor* StaticMeshActor = Cast<AStaticMeshActor> (Outer);
+			ASkeletalMeshActor* SkeletalMeshActor = Cast<ASkeletalMeshActor> (Outer);
+
+			if (StaticMeshActor || SkeletalMeshActor)
+			{
+				CurrentLayer->Update (Cast<AActor> (Outer));
+			}
+
+			LogText (StaticMeshActor->GetName ());
+		}
+	}
+}
+
+bool ULayerManager::ActorExistInCurrentLayer (AActor* Actor)
+{
+	/*if (Cast<AStaticMeshActor> (Actor) || Cast<ASkeletalMeshActor> (Actor))
+	{
+		if (CurrentLayer->GetPrimitiveToMaterialsMap ().FindKey (Actor->GetName ()))
+		{
+			return true;
+		}
+	}
+
+	return false;*/
+
+	return true;
 }
 
 void ULayerManager::ParseAllActors (UMaterialLayer* Layer)
@@ -84,11 +141,7 @@ void ULayerManager::ParseAllActors (UMaterialLayer* Layer)
 
 	while (StaticMeshActorItr)
 	{
-		UE_LOG (LogTemp, Warning, TEXT ("Actor Name is %s: "), *StaticMeshActorItr->GetName ());
-
 		Layer->Update (*StaticMeshActorItr);
-
-		//next actor
 		++StaticMeshActorItr;
 	}
 
@@ -99,8 +152,6 @@ void ULayerManager::ParseAllActors (UMaterialLayer* Layer)
 		UE_LOG (LogTemp, Warning, TEXT ("Actor Name is %s: "), *SkeletalMeshActorItr->GetName ());
 
 		Layer->Update (*SkeletalMeshActorItr);
-
-		//next actor
 		++SkeletalMeshActorItr;
 	}
 }
@@ -122,7 +173,7 @@ void ULayerManager::Save(){
     
     if(BufferArchive.Num() > 0){
         FString FilePath = FPaths::Combine(*FPaths::GamePluginsDir(), TEXT("Configuration"), TEXT("Content"), TEXT("ConfData.dat"));
-        DisplayNotification(FilePath);
+        LogText(FilePath);
         FFileHelper::SaveArrayToFile(BufferArchive, *FilePath);
     }
 }
@@ -149,20 +200,27 @@ void ULayerManager::Duplicate(UMaterialLayer* MaterialLayer){
 void ULayerManager::OnObjectModified(UObject* Object){
     if(!CurrentLayer){ return; }
 
-	bool IsWanted = Cast<AStaticMeshActor> (Object) || Cast<ASkeletalMeshActor> (Object);
+	UObject* Outer = Object->GetOuter ();
 
-	if (!IsWanted) { 
+	AStaticMeshActor* StaticMeshActor = Cast<AStaticMeshActor> (Outer);
+
+	if (StaticMeshActor) 
+	{	
+		CurrentLayer->Update (StaticMeshActor);
+		LogText ("On Object Modify " + StaticMeshActor->GetName ());
+		Save ();
 		return;
 	}
+
+	ASkeletalMeshActor* SkeletalMeshActor = Cast<ASkeletalMeshActor> (Outer);
     
-	UPrimitiveComponent* Actor = Cast<UPrimitiveComponent>(Object);
-    
-    if(Actor){
-        CurrentLayer->Update(Actor);
-        DisplayNotification("On Object Modify " + Object->GetName());
-    }
-    
-    Save();
+	if (SkeletalMeshActor)
+	{
+		CurrentLayer->Update (SkeletalMeshActor);
+		LogText ("On Object Modify " + SkeletalMeshActor->GetName ());
+		Save ();
+		return;
+	}    
 }
 
 void ULayerManager::OnLayerEnabledChanged(){
@@ -198,6 +256,20 @@ bool ULayerManager::SwapMaterials (UMaterialLayer* Layer1, UMaterialLayer* Layer
 	return false;
 }
 
+void ULayerManager::OnObjectPropertyChanged (UObject* Object, FPropertyChangedEvent& PropertyChangedEvent)
+{
+	FName PropertyName = (PropertyChangedEvent.Property != nullptr) ? PropertyChangedEvent.Property->GetFName () : NAME_None;
+
+	ShouldCreateLayer ();
+
+	if (PropertyName == "OverrideMaterials")
+	{
+		LogText ("On Object Property Changed");
+	}
+
+	Save ();
+}
+
 void ULayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
 {
     if(!CurrentLayer){ return; }	
@@ -209,7 +281,6 @@ void ULayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
     if(Material)
     {
         CurrentLayer->Update(Actor);
-        DisplayNotification("On Apply Object On Actor " + GEditor->GetTransactionName().ToString());
     }
     
     Save();
@@ -226,32 +297,8 @@ void ULayerManager::ShouldCreateLayer ()
 	}
 }
 
-void ULayerManager::OnObjectPropertyChanged(UObject* Object, FPropertyChangedEvent& PropertyChangedEvent)
+void ULayerManager::SetCurentLayer (UMaterialLayer* Layer)
 {
-    FName PropertyName = (PropertyChangedEvent.Property != nullptr) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
-
-	ShouldCreateLayer ();
-    
-    if(PropertyName == "OverrideMaterials"){
-        DisplayNotification("On Object Property Changed");
-    }
-    
-    Save();
+	CurrentLayer = Layer;
 }
-
-void ULayerManager::DisplayNotification(const FString& String) const{
-    FNotificationInfo Info(FText::FromString(String));
-    Info.FadeInDuration = 0.1f;
-    Info.FadeOutDuration = 0.5f;
-    Info.ExpireDuration = 1.5f;
-    Info.bUseThrobber = false;
-    Info.bUseSuccessFailIcons = true;
-    Info.bUseLargeFont = true;
-    Info.bFireAndForget = false;
-    Info.bAllowThrottleWhenFrameRateIsLow = false;
-    auto NotificationItem = FSlateNotificationManager::Get().AddNotification( Info );
-    NotificationItem->SetCompletionState(SNotificationItem::CS_Success);
-    NotificationItem->ExpireAndFadeout();
-}
-
 

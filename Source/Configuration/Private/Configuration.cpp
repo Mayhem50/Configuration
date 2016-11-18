@@ -69,11 +69,8 @@ void FConfigurationModule::ShutdownModule()
 void FConfigurationModule::OnInit(){    
     LayerManager = NewObject<ULayerManager>();
 	LayerManager->AddToRoot ();
-    
-	//FCoreUObjectDelegates::OnObjectModified.AddRaw(LayerManager, &ULayerManager::OnObjectModified);
 
     FEditorDelegates::OnApplyObjectToActor.AddUObject (LayerManager, &ULayerManager::OnApplyObjectOnActor);
-    FCoreUObjectDelegates::OnObjectPropertyChanged.AddUObject (LayerManager, &ULayerManager::OnObjectPropertyChanged);
 }
 
 TSharedRef<SDockTab> FConfigurationModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)

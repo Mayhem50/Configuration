@@ -22,9 +22,10 @@ public:
     void Init();
     
     void OnApplyObjectOnActor(UObject* Object, AActor* Actor);
-    void OnObjectPropertyChanged(UObject* Object, FPropertyChangedEvent& PropertyChangedEvent);
+	void OnUndoRedo (struct FUndoSessionContext Context, bool bCanRedo);
     void OnObjectModified(UObject* Object);
-    
+	void OnObjectPropertyChanged (UObject* Object, FPropertyChangedEvent& PropertyChangedEvent);
+	    
     void OnLayerEnabledChanged();
 
 	void ApplyDisplayedLayers ();
@@ -32,10 +33,7 @@ public:
     TArray<class UMaterialLayer*>& GetLayers() { return Layers; }
 
 	class UMaterialLayer* GetCurrentLayer () { return CurrentLayer; }
-	void SetCurentLayer (class UMaterialLayer* Layer) 
-	{ 
-		CurrentLayer = Layer;
-	}
+	void SetCurentLayer (class UMaterialLayer* Layer);
     
     void AddLayer();
     void RemoveLayer(class UMaterialLayer* MaterialLayer);
@@ -44,15 +42,15 @@ public:
     void Save();
 
 	bool SwapMaterials (UMaterialLayer* Layer1, UMaterialLayer* Layer2);
-    
-	void DisplayNotification (const FString& String) const;
 
 	DECLARE_DELEGATE (FOnCreateNewLayerFromDrag)
 		FOnCreateNewLayerFromDrag OnCreateNewLayerFromDrag;
-    
+		    
 private:
 	void ParseAllActors (class UMaterialLayer* Layer);
 	void ShouldCreateLayer ();
+
+	bool ActorExistInCurrentLayer (AActor* Actor);
 
 	UPROPERTY()
 		TArray<class UMaterialLayer*> Layers;
