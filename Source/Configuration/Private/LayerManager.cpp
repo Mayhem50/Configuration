@@ -15,11 +15,13 @@
 #include "SLevelViewport.h"
 #include "EditorUndoClient.h"
 #include "InputCoreTypes.h"
+
 #include "Classes/Editor/Transactor.h"
+#include "ScopedTransaction.h"
 
 ULayerManager::ULayerManager()
 {
-
+	SetFlags (RF_Transactional);
 }
 
 ULayerManager::~ULayerManager()
@@ -81,11 +83,6 @@ void ULayerManager::Init(){
 
 void ULayerManager::OnUndoRedo (FUndoSessionContext Context, bool bCanRedo)
 {
-	if(Context.PrimaryObject)
-		LogText (Context.PrimaryObject->GetName ());
-
-	LogText (Context.Title.ToString() + " " + Context.Context);
-
 	UTransBuffer* Transbuffer = Cast<UTransBuffer> (GEditor->Trans);
 	int32 UndoCount = Transbuffer->GetUndoCount ();
 	const FTransaction* Transaction = Transbuffer->GetTransaction (Transbuffer->UndoBuffer.Num () - UndoCount);
@@ -111,8 +108,6 @@ void ULayerManager::OnUndoRedo (FUndoSessionContext Context, bool bCanRedo)
 			{
 				CurrentLayer->Update (Cast<AActor> (Outer));
 			}
-
-			LogText (StaticMeshActor->GetName ());
 		}
 	}
 }
@@ -299,6 +294,21 @@ void ULayerManager::ShouldCreateLayer ()
 
 void ULayerManager::SetCurentLayer (UMaterialLayer* Layer)
 {
+	const FScopedTransaction Transaction (FText::FromString("Change Current Layer"));
+	this->Modify ();
 	CurrentLayer = Layer;
 }
 
+void ULayerManager::PreEditUndo ()
+{
+	LogText ("PreEditUndo");
+	LogText (CurrentLayer->LayerName);
+}
+
+void ULayerManager::PostEditUndo ()
+{
+	LogText ("PostEditUndo");
+	LogText (CurrentLayer->LayerName);
+
+	OnPostEditUndo.ExecuteIfBound ();
+}

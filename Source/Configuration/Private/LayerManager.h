@@ -43,8 +43,14 @@ public:
 
 	bool SwapMaterials (UMaterialLayer* Layer1, UMaterialLayer* Layer2);
 
+	virtual void PreEditUndo () override;
+	virtual void PostEditUndo () override;
+
 	DECLARE_DELEGATE (FOnCreateNewLayerFromDrag)
 		FOnCreateNewLayerFromDrag OnCreateNewLayerFromDrag;
+
+	DECLARE_DELEGATE (FOnPostEditUndo)
+		FOnPostEditUndo OnPostEditUndo;
 		    
 private:
 	void ParseAllActors (class UMaterialLayer* Layer);

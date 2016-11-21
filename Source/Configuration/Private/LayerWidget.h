@@ -29,6 +29,8 @@ public:
 	FReply OnToggleLayerVisibility (UMaterialLayer* Item);
 	TOptional<EItemDropZone> OnCanAcceptDrop (const FDragDropEvent& DragDropEvent, EItemDropZone ItemDropZone, UMaterialLayer* Item);
 
+	void OnLayersManagerPostEditUndo ();
+
     void OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type SelectionType);    
     void OnTextChanged(const FText& InText, UMaterialLayer* Item);
 

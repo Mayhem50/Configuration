@@ -10,11 +10,9 @@
 
 #include "LayerWidget.h"
 
-#include "Classes/Editor/Transactor.h"
-#include "ScopedTransaction.h"
-
 void SLayersWidget::Construct(const SLayersWidget::FArguments &Args){
     LayerManager = Args._LayerManager;
+	LayerManager->OnPostEditUndo.BindRaw (this, &SLayersWidget::OnLayersManagerPostEditUndo);
     
     ChildSlot
     [
@@ -81,17 +79,25 @@ void SLayersWidget::Construct(const SLayersWidget::FArguments &Args){
     }
 }
 
+void SLayersWidget::OnLayersManagerPostEditUndo () 
+{
+	if (LayerManager->GetCurrentLayer ())
+	{
+		ListViewWidget->SetSelection (LayerManager->GetCurrentLayer (), ESelectInfo::Direct);
+	}
+}
+
 FReply SLayersWidget::OnAddButtonPressed(){
     LayerManager->AddLayer();
     ListViewWidget->RequestListRefresh();
-    ListViewWidget->SetSelection(LayerManager->GetLayers().Last(), ESelectInfo::Direct);
+    ListViewWidget->SetSelection(LayerManager->GetLayers().Last(), ESelectInfo::OnNavigation);
     return FReply::Handled();
 }
 
 FReply SLayersWidget::OnRemoveButtonPressed(UMaterialLayer* Layer){
     if(Layer){
         LayerManager->RemoveLayer(Layer);
-        ListViewWidget->SetSelection(LayerManager->GetLayers().Last(), ESelectInfo::Direct);
+        ListViewWidget->SetSelection(LayerManager->GetLayers().Last(), ESelectInfo::OnNavigation);
         ListViewWidget->RequestListRefresh();
     }
     return FReply::Handled();
@@ -123,7 +129,9 @@ void SLayersWidget::OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type S
 		return;
 	}
 
-	LayerManager->SetCurentLayer (SelectedMaterialLayer);    
+	if(SelectionType != ESelectInfo::Direct)
+		LayerManager->SetCurentLayer (SelectedMaterialLayer);  
+
 	LayerManager->ApplyDisplayedLayers ();
 }
 
