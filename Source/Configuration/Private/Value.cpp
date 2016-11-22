@@ -9,4 +9,12 @@ UConfigurationValue::UConfigurationValue(const FObjectInitializer& ObjectInitial
 	: Super(ObjectInitializer)
 {}
 
+void UConfigurationValue::Apply()
+{
+	for(UBaseLayer* Layer : Layers)
+	{
+		Layer->Apply();
+	}
+}
+
 #undef LOCTEXT_NAMESPACE

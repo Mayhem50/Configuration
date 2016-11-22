@@ -11,11 +11,10 @@
 #include "LevelEditor.h"
 
 #include "LayerWidget.h"
+#include "VariantWidget.h"
 
 #include "IAssetTools.h"
 #include "AssetToolsModule.h"
-
-#include "VariantAssetAction.h"
 
 #include "AssetRegistryModule.h"
 
@@ -76,7 +75,40 @@ void FConfigurationModule::ShutdownModule()
 
 void FConfigurationModule::OnInit()
 {
-	// Create Asset Package
+	InitLayerManager();
+	InitVariantManager();
+
+	FEditorDelegates::OnApplyObjectToActor.AddUObject(LayerManager, &ULayerManager::OnApplyObjectOnActor);
+	FCoreUObjectDelegates::OnObjectPropertyChanged.AddUObject(LayerManager, &ULayerManager::OnObjectPropertyChanged);
+}
+
+void FConfigurationModule::InitVariantManager()
+{
+	UPackage* Package = LoadPackage(nullptr, TEXT("/ConfigurationModule/Datas/Variants"), LOAD_None);
+
+	if(!Package)
+	{
+		Package = CreatePackage(nullptr, TEXT("/ConfigurationModule/Datas/Variants"));
+
+		if(!Package)
+		{
+			return;
+		}
+
+		VariantManager = NewObject<UVariantManager>(Package, UVariantManager::StaticClass(), TEXT("Variants"), RF_Public | RF_Standalone);
+		FAssetRegistryModule::AssetCreated(VariantManager);
+		VariantManager->MarkPackageDirty();
+	}
+	else
+	{
+		VariantManager = FindObject<UVariantManager>(Package, TEXT("Layers"));
+	}
+
+	VariantManager->AddToRoot();
+}
+
+void FConfigurationModule::InitLayerManager()
+{
 	UPackage* Package = LoadPackage(nullptr, TEXT("/ConfigurationModule/Datas/Layers"), LOAD_None);
 
 	if(!Package)
@@ -98,17 +130,6 @@ void FConfigurationModule::OnInit()
 	}
 
 	LayerManager->AddToRoot();
-
-	FEditorDelegates::OnApplyObjectToActor.AddUObject(LayerManager, &ULayerManager::OnApplyObjectOnActor);
-	FCoreUObjectDelegates::OnObjectPropertyChanged.AddUObject(LayerManager, &ULayerManager::OnObjectPropertyChanged);
-
-	//IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	//{
-	//	TSharedRef<IAssetTypeActions> Action = MakeShareable(new FAssetTypeActions_ConfigurationVariant);
-	//	AssetTools.RegisterAssetTypeActions(Action);
-	//}
-
-
 }
 
 TSharedRef<SDockTab> FConfigurationModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
@@ -119,7 +140,16 @@ TSharedRef<SDockTab> FConfigurationModule::OnSpawnPluginTab(const FSpawnTabArgs&
 		.TabRole(ETabRole::NomadTab)
 		[
 			// Put your tab content here!
-			SNew(SLayersWidget).LayerManager(LayerManager)
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			[
+				SNew(SLayersWidget).LayerManager(LayerManager)
+			]
+
+			+ SHorizontalBox::Slot()
+			[
+				SNew(SVariantsWidget).VariantManager(VariantManager)
+			]
 		];
 }
 

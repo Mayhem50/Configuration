@@ -6,8 +6,7 @@
 //  Copyright © 2016 Epic Games, Inc. All rights reserved.
 //
 
-#ifndef LayersWidget_h
-#define LayersWidget_h
+#pragma once
 
 #include "SlateBasics.h"
 #include "SBorder.h"
@@ -175,5 +174,3 @@ public:
 	/** The size of the drag and drop color block */
 	FVector2D BlockSize;
 };
-
-#endif /* LayersWidget_h */

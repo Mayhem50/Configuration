@@ -10,6 +10,9 @@ class CONFIGURATION_API UConfigurationValue : public UDataAsset
 	GENERATED_UCLASS_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "Functions")
+		void Apply();
+
 	UPROPERTY(EditAnywhere, Category = "Properties")
 		FString Name;
 

@@ -16,7 +16,7 @@ class UNameList : public UObject
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadOnly, Category = "Properties")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Properties")
 		TArray<FName> Names;
 };
 

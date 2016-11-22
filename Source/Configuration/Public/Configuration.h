@@ -21,15 +21,20 @@ public:
 
 	void OnInit();
 
-	class ULayerManager* LayerManager;
 
 private:
 
 	void AddToolbarExtension(FToolBarBuilder& Builder);
 	void AddMenuExtension(FMenuBuilder& Builder);
 
+	void InitLayerManager();
+	void InitVariantManager();
+
 	TSharedRef<class SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
 
 private:
+	class ULayerManager* LayerManager;
+	class UVariantManager* VariantManager;
+
 	TSharedPtr<class FUICommandList> PluginCommands;
 };

@@ -55,10 +55,10 @@ public:
 	DECLARE_DELEGATE(FOnLayersManagerNotify)
 	FOnLayersManagerNotify OnLayersManagerNotify;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, Category = "Properties")
 		TArray<class UMaterialLayer*> Layers;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, Category = "Properties")
 		class UMaterialLayer* CurrentLayer;
 
 

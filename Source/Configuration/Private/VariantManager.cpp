@@ -1,10 +1,10 @@
 #include "ConfigurationPrivatePCH.h"
 
-#include "Variant.h"
+#include "VariantManager.h"
 
 #define LOCTEXT_NAMESPACE "FConfigurationModule"
 
-UConfigurationVariant::UConfigurationVariant(const FObjectInitializer& ObjectInitializer)
+UVariantManager::UVariantManager(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {}
 

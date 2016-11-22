@@ -33,52 +33,6 @@ ULayerManager::~ULayerManager()
 
 void ULayerManager::Init()
 {
-	//TArray<uint8> BinaryArray;
-	//BinaryArray.Init(0, 0);
-
-	//FString FilePath = FPaths::Combine(*FPaths::GamePluginsDir(), TEXT("Configuration"), TEXT("Content"), TEXT("ConfData.dat"));
-
-	//LogText(FilePath);
-
-	//if(FPaths::FileExists(FilePath))
-	//{
-	//	Layers.Empty();
-	//	FFileHelper::LoadFileToArray(BinaryArray, *FilePath);
-
-	//	if(BinaryArray.Num() > 0)
-	//	{
-	//		FMemoryReader Reader = FMemoryReader(BinaryArray, true);
-
-	//		while(!Reader.AtEnd())
-	//		{
-	//			UMaterialLayer* Layer = NewObject<UMaterialLayer>();
-	//			Reader << *Layer;
-	//			//Layer->Serialize (Reader);
-	//			//Layer->OnEnabledChanged.BindUObject (this, &ULayerManager::OnLayerEnabledChanged);
-	//			Layers.Add(Layer);
-	//		}
-
-	//		CurrentLayer = Layers.Last();
-	//		Layers.RemoveAt(Layers.Num() - 1);
-
-	//		for(UMaterialLayer* Layer : Layers)
-	//		{
-	//			if(Layer->LayerName == CurrentLayer->LayerName)
-	//			{
-	//				CurrentLayer = Layer;
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-	//else
-	//{
-	//	AddLayer();
-	//	CurrentLayer = Layers[0];
-	//	ParseAllActors(CurrentLayer);
-	//	Save();
-	//}
-
 	if(Layers.Num() == 0)
 	{
 		AddLayer();
@@ -181,30 +135,7 @@ void ULayerManager::Save()
 	}
 
 	MarkPackageDirty();
-
-	//FBufferArchive BufferArchive;
-
-	//for(auto Layer : Layers)
-	//{
-	//	BufferArchive << *Layer;
-	//	//Layer->Serialize (BufferArchive);
-	//}
-
-	//BufferArchive << *CurrentLayer;
-
-	//if(BufferArchive.Num() > 0)
-	//{
-	//	FString FilePath = FPaths::Combine(*FPaths::GamePluginsDir(), TEXT("Configuration"), TEXT("Content"), TEXT("ConfData.dat"));
-	//	LogText(FilePath);
-	//	FFileHelper::SaveArrayToFile(BufferArchive, *FilePath);
-	//}
 }
-
-//void ULayerManager::Serialize(FArchive& Ar)
-//{
-//	Ar << Layers;
-//	Ar << *CurrentLayer;
-//}
 
 void ULayerManager::AddLayer()
 {

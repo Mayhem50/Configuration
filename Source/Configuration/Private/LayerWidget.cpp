@@ -19,9 +19,6 @@ void SLayersWidget::Construct(const SLayersWidget::FArguments &Args)
 
 	ChildSlot
 		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-		[
 			SNew(SScrollBox)
 			+ SScrollBox::Slot()
 		[
@@ -65,17 +62,6 @@ void SLayersWidget::Construct(const SLayersWidget::FArguments &Args)
 			+ SHeaderRow::Column("Trash").DefaultLabel(FText::FromString("Trash")).FixedWidth(24)
 		)
 		]
-		]
-	+ SHorizontalBox::Slot()
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-		[
-			SNew(STextBlock)
-			.Text(FText::FromString("Future Text"))
-		]
-		]
-
 		];
 
 	if(LayerManager->GetCurrentLayer())
