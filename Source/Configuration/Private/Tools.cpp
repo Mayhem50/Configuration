@@ -5,6 +5,8 @@
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
+#define LOCTEXT_NAMESPACE "FConfigurationModule"
+
 void DisplayNotification (const FString& String, float Duration)
 {
 	FNotificationInfo Info (FText::FromString (String));
@@ -20,3 +22,5 @@ void DisplayNotification (const FString& String, float Duration)
 	NotificationItem->SetCompletionState (SNotificationItem::CS_Success);
 	NotificationItem->ExpireAndFadeout ();
 }
+
+#undef LOCTEXT_NAMESPACE

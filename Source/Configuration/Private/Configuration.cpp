@@ -12,6 +12,13 @@
 
 #include "LayerWidget.h"
 
+#include "IAssetTools.h"
+#include "AssetToolsModule.h"
+
+#include "VariantAssetAction.h"
+
+#include "AssetRegistryModule.h"
+
 static const FName ConfigurationTabName("Configuration");
 
 #define LOCTEXT_NAMESPACE "FConfigurationModule"
@@ -19,40 +26,41 @@ static const FName ConfigurationTabName("Configuration");
 void FConfigurationModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
+	FPackageName::RegisterMountPoint("/ConfigurationModule/", FPaths::GamePluginsDir());
 
 	FConfigurationStyle::Initialize();
 	FConfigurationStyle::ReloadTextures();
 
 	FConfigurationCommands::Register();
-	
+
 	PluginCommands = MakeShareable(new FUICommandList);
 
 	PluginCommands->MapAction(
 		FConfigurationCommands::Get().OpenPluginWindow,
 		FExecuteAction::CreateRaw(this, &FConfigurationModule::PluginButtonClicked),
 		FCanExecuteAction());
-		
+
 	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-	
+
 	{
 		TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
 		MenuExtender->AddMenuExtension("WindowLayout", EExtensionHook::After, PluginCommands, FMenuExtensionDelegate::CreateRaw(this, &FConfigurationModule::AddMenuExtension));
 
 		LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 	}
-	
+
 	{
 		TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 		ToolbarExtender->AddToolBarExtension("Settings", EExtensionHook::After, PluginCommands, FToolBarExtensionDelegate::CreateRaw(this, &FConfigurationModule::AddToolbarExtension));
-		
+
 		LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
 	}
-	
+
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(ConfigurationTabName, FOnSpawnTab::CreateRaw(this, &FConfigurationModule::OnSpawnPluginTab))
 		.SetDisplayName(LOCTEXT("FConfigurationTabTitle", "Configuration"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
-    
-    OnInit();
+
+	OnInit();
 }
 
 void FConfigurationModule::ShutdownModule()
@@ -66,17 +74,46 @@ void FConfigurationModule::ShutdownModule()
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(ConfigurationTabName);
 }
 
-void FConfigurationModule::OnInit(){    
-    LayerManager = NewObject<ULayerManager>();
-	LayerManager->AddToRoot ();
+void FConfigurationModule::OnInit()
+{
+	// Create Asset Package
+	UPackage* Package = LoadPackage(nullptr, TEXT("/ConfigurationModule/Datas/Layers"), LOAD_None);
 
-    FEditorDelegates::OnApplyObjectToActor.AddUObject (LayerManager, &ULayerManager::OnApplyObjectOnActor);
-	FCoreUObjectDelegates::OnObjectPropertyChanged.AddUObject (LayerManager, &ULayerManager::OnObjectPropertyChanged);
+	if(!Package)
+	{
+		Package = CreatePackage(nullptr, TEXT("/ConfigurationModule/Datas/Layers"));
+
+		if(!Package)
+		{
+			return;
+		}
+
+		LayerManager = NewObject<ULayerManager>(Package, ULayerManager::StaticClass(), TEXT("Layers"), RF_Public | RF_Standalone);
+		FAssetRegistryModule::AssetCreated(LayerManager);
+		LayerManager->MarkPackageDirty();
+	}
+	else
+	{
+		LayerManager = FindObject<ULayerManager>(Package, TEXT("Layers"));
+	}
+
+	LayerManager->AddToRoot();
+
+	FEditorDelegates::OnApplyObjectToActor.AddUObject(LayerManager, &ULayerManager::OnApplyObjectOnActor);
+	FCoreUObjectDelegates::OnObjectPropertyChanged.AddUObject(LayerManager, &ULayerManager::OnObjectPropertyChanged);
+
+	//IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+	//{
+	//	TSharedRef<IAssetTypeActions> Action = MakeShareable(new FAssetTypeActions_ConfigurationVariant);
+	//	AssetTools.RegisterAssetTypeActions(Action);
+	//}
+
+
 }
 
 TSharedRef<SDockTab> FConfigurationModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	LayerManager->Init ();
+	LayerManager->Init();
 
 	return SNew(SDockTab)
 		.TabRole(ETabRole::NomadTab)
@@ -102,5 +139,5 @@ void FConfigurationModule::AddToolbarExtension(FToolBarBuilder& Builder)
 }
 
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE(FConfigurationModule, Configuration)

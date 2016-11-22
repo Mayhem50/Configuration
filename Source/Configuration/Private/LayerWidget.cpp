@@ -10,241 +10,252 @@
 
 #include "LayerWidget.h"
 
-void SLayersWidget::Construct(const SLayersWidget::FArguments &Args){
-    LayerManager = Args._LayerManager;
-	LayerManager->OnLayersManagerNotify.BindRaw (this, &SLayersWidget::OnLayersManagerNotify);
-    
-    ChildSlot
-    [
-     SNew(SHorizontalBox)
-     +SHorizontalBox::Slot()
-     [
-      SNew(SScrollBox)
-      + SScrollBox::Slot()
-      [
-       SNew(SHorizontalBox)
-       +SHorizontalBox::Slot()
-       .Padding(FMargin(20, 15))
-       [
-        SNew(SButton)
-        .Text(FText::FromString("Add Layer"))
-        .OnClicked(this, &SLayersWidget::OnAddButtonPressed)
-        ]
-       +SHorizontalBox::Slot()
-       .Padding(FMargin(20, 15))
-       [
-        SNew(SButton)
-        .Text(FText::FromString("Duplicate Layer"))
-        .OnClicked(this, &SLayersWidget::OnDuplicateButtonPressed)
-        ]
-       [
-        SNew(SButton)
-        .Text(FText::FromString("Save"))
-        .OnClicked(this, &SLayersWidget::OnSave)
-        ]
-       ]
-      
-      +SScrollBox::Slot()
-      [
-       SAssignNew(ListViewWidget, SListView<UMaterialLayer*>)
-       .ItemHeight(24)
-       .ListItemsSource(&(LayerManager->GetLayers()))
-       .OnGenerateRow(this, &SLayersWidget::OnGenerateRowForList)
-       .OnSelectionChanged(this, &SLayersWidget::OnSelectionChanged)
-       .HeaderRow(
-                  SNew(SHeaderRow)
-                  +SHeaderRow::Column("Dummy").DefaultLabel(FText::FromString("")).FixedWidth(50)
-                  +SHeaderRow::Column("Name").DefaultLabel(FText::FromString("Name"))
-                  +SHeaderRow::Column("Visibility").DefaultLabel(FText::FromString("")).FixedWidth(24)
-                  +SHeaderRow::Column("Selected").DefaultLabel(FText::FromString("Selected")).FixedWidth(24)
-                  +SHeaderRow::Column("Trash").DefaultLabel(FText::FromString("Trash")).FixedWidth(24)
-                  )
-       ]
-      ]
-     +SHorizontalBox::Slot()
-     [
-      SNew(SHorizontalBox)
-      +SHorizontalBox::Slot()
-      [
-       SNew(STextBlock)
-       .Text(FText::FromString("Future Text"))
-       ]
-      ]
-     
-     ];
-    
-    if (LayerManager->GetCurrentLayer ())
-    {
-        ListViewWidget->SetSelection (LayerManager->GetCurrentLayer (), ESelectInfo::Direct);
-    }
-}
+#define LOCTEXT_NAMESPACE "FConfigurationModule"
 
-void SLayersWidget::OnLayersManagerNotify ()
+void SLayersWidget::Construct(const SLayersWidget::FArguments &Args)
 {
-	ListViewWidget->RebuildList ();
+	LayerManager = Args._LayerManager;
+	LayerManager->OnLayersManagerNotify.BindRaw(this, &SLayersWidget::OnLayersManagerNotify);
 
-	if (LayerManager->GetCurrentLayer ())
+	ChildSlot
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+		[
+			SNew(SScrollBox)
+			+ SScrollBox::Slot()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+		.Padding(FMargin(20, 15))
+		[
+			SNew(SButton)
+			.Text(FText::FromString("Add Layer"))
+		.OnClicked(this, &SLayersWidget::OnAddButtonPressed)
+		]
+	+ SHorizontalBox::Slot()
+		.Padding(FMargin(20, 15))
+		[
+			SNew(SButton)
+			.Text(FText::FromString("Duplicate Layer"))
+		.OnClicked(this, &SLayersWidget::OnDuplicateButtonPressed)
+		]
+	+ SHorizontalBox::Slot()
+		.Padding(FMargin(20, 15))
+		[
+			SNew(SButton)
+			.Text(FText::FromString("Save"))
+		.OnClicked(this, &SLayersWidget::OnSave)
+		]
+		]
+
+	+ SScrollBox::Slot()
+		[
+			SAssignNew(ListViewWidget, SListView<UMaterialLayer*>)
+			.ItemHeight(24)
+		.ListItemsSource(&(LayerManager->GetLayers()))
+		.OnGenerateRow(this, &SLayersWidget::OnGenerateRowForList)
+		.OnSelectionChanged(this, &SLayersWidget::OnSelectionChanged)
+		.HeaderRow(
+			SNew(SHeaderRow)
+			+ SHeaderRow::Column("Dummy").DefaultLabel(FText::FromString("")).FixedWidth(50)
+			+ SHeaderRow::Column("Name").DefaultLabel(FText::FromString("Name"))
+			+ SHeaderRow::Column("Visibility").DefaultLabel(FText::FromString("")).FixedWidth(24)
+			+ SHeaderRow::Column("Selected").DefaultLabel(FText::FromString("Selected")).FixedWidth(24)
+			+ SHeaderRow::Column("Trash").DefaultLabel(FText::FromString("Trash")).FixedWidth(24)
+		)
+		]
+		]
+	+ SHorizontalBox::Slot()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString("Future Text"))
+		]
+		]
+
+		];
+
+	if(LayerManager->GetCurrentLayer())
 	{
-		ListViewWidget->SetSelection (LayerManager->GetCurrentLayer (), ESelectInfo::Direct);
+		ListViewWidget->SetSelection(LayerManager->GetCurrentLayer(), ESelectInfo::Direct);
 	}
 }
 
-FReply SLayersWidget::OnAddButtonPressed(){
-    LayerManager->AddLayer();
-    ListViewWidget->RequestListRefresh();
-    ListViewWidget->SetSelection(LayerManager->GetLayers().Last(), ESelectInfo::OnNavigation);
-    return FReply::Handled();
+void SLayersWidget::OnLayersManagerNotify()
+{
+	ListViewWidget->RebuildList();
+
+	if(LayerManager->GetCurrentLayer())
+	{
+		ListViewWidget->SetSelection(LayerManager->GetCurrentLayer(), ESelectInfo::Direct);
+	}
 }
 
-FReply SLayersWidget::OnRemoveButtonPressed(UMaterialLayer* Layer){
-    if(Layer){
-        LayerManager->RemoveLayer(Layer);
-        ListViewWidget->SetSelection(LayerManager->GetLayers().Last(), ESelectInfo::OnNavigation);
-        ListViewWidget->RequestListRefresh();
-    }
-    return FReply::Handled();
+FReply SLayersWidget::OnAddButtonPressed()
+{
+	LayerManager->AddLayer();
+	ListViewWidget->RequestListRefresh();
+	ListViewWidget->SetSelection(LayerManager->GetLayers().Last(), ESelectInfo::OnNavigation);
+	return FReply::Handled();
 }
 
-FReply SLayersWidget::OnDuplicateButtonPressed(){
-    LayerManager->Duplicate(SelectedMaterialLayer);
-    ListViewWidget->RequestListRefresh();
-    return FReply::Handled();
+FReply SLayersWidget::OnRemoveButtonPressed(UMaterialLayer* Layer)
+{
+	if(Layer)
+	{
+		LayerManager->RemoveLayer(Layer);
+		ListViewWidget->SetSelection(LayerManager->GetLayers().Last(), ESelectInfo::OnNavigation);
+		ListViewWidget->RequestListRefresh();
+	}
+	return FReply::Handled();
 }
 
-FReply SLayersWidget::OnSave(){
-    LayerManager->Save();
-    
-    return FReply::Handled();
+FReply SLayersWidget::OnDuplicateButtonPressed()
+{
+	LayerManager->Duplicate(SelectedMaterialLayer);
+	ListViewWidget->RequestListRefresh();
+	return FReply::Handled();
 }
 
-TSharedRef<ITableRow> SLayersWidget::OnGenerateRowForList(UMaterialLayer* Item, const TSharedRef<STableViewBase> &OwnerTable){  
+FReply SLayersWidget::OnSave()
+{
+	LayerManager->Save();
+
+	return FReply::Handled();
+}
+
+TSharedRef<ITableRow> SLayersWidget::OnGenerateRowForList(UMaterialLayer* Item, const TSharedRef<STableViewBase> &OwnerTable)
+{
 	return
-		SNew (SLayerRowWidget, OwnerTable, Item)
-		.LayersWidget (this);
+		SNew(SLayerRowWidget, OwnerTable, Item)
+		.LayersWidget(this);
 }
 
-void SLayersWidget::OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type SelectionType){
-    SelectedMaterialLayer = Item;
-    
-	if (!SelectedMaterialLayer)
+void SLayersWidget::OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type SelectionType)
+{
+	SelectedMaterialLayer = Item;
+
+	if(!SelectedMaterialLayer)
 	{
 		return;
 	}
 
-	if (SelectionType != ESelectInfo::Direct) {
-		LayerManager->SetCurentLayer (SelectedMaterialLayer);
-		LayerManager->ApplyDisplayedLayers ();
+	if(SelectionType != ESelectInfo::Direct)
+	{
+		LayerManager->SetCurentLayer(SelectedMaterialLayer);
+		LayerManager->ApplyDisplayedLayers();
 	}
 }
 
-void SLayersWidget::OnTextChanged(const FText &InText, UMaterialLayer* Item){
-    SelectedMaterialLayer = Item;
-    
-    if(!Item){ return; }
-    
-    Item->LayerName = InText.ToString ();
-}
-
-FReply SLayersWidget::OnToggleLayerVisibility (UMaterialLayer* Item)
+void SLayersWidget::OnTextChanged(const FText &InText, UMaterialLayer* Item)
 {
-    Item->SetEnabled (!Item->IsEnabled ());
-	LayerManager->ApplyDisplayedLayers ();
-    ListViewWidget->RebuildList ();
-    return FReply::Handled ();
+	SelectedMaterialLayer = Item;
+
+	if(!Item) { return; }
+
+	Item->LayerName = InText.ToString();
+}
+
+FReply SLayersWidget::OnToggleLayerVisibility(UMaterialLayer* Item)
+{
+	Item->SetEnabled(!Item->IsEnabled());
+	LayerManager->ApplyDisplayedLayers();
+	ListViewWidget->RebuildList();
+	return FReply::Handled();
 }
 
 
-FReply SLayerRowWidget::OnDragDetected (const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+FReply SLayerRowWidget::OnDragDetected(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
 	TSharedRef<FListItemDragDropOpertation> Operation = FListItemDragDropOpertation::New(this);
-	return FReply::Handled ().BeginDragDrop(Operation);
+	return FReply::Handled().BeginDragDrop(Operation);
 }
 
-void SLayerRowWidget::OnDragEnter (const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
+void SLayerRowWidget::OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
 {
-	TSharedPtr<FListItemDragDropOpertation> DragDropOperation = DragDropEvent.GetOperationAs<FListItemDragDropOpertation> ();
+	TSharedPtr<FListItemDragDropOpertation> DragDropOperation = DragDropEvent.GetOperationAs<FListItemDragDropOpertation>();
 
-	if (DragDropOperation.IsValid ())
+	if(DragDropOperation.IsValid())
 	{
 		this->OnMouseEnter(MyGeometry, DragDropEvent);
 		return;
 	}
 }
 
-FReply SLayerRowWidget::OnDrop (const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
+FReply SLayerRowWidget::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
 {
-	TSharedPtr<FListItemDragDropOpertation> DragDropOperation = DragDropEvent.GetOperationAs<FListItemDragDropOpertation> ();
+	TSharedPtr<FListItemDragDropOpertation> DragDropOperation = DragDropEvent.GetOperationAs<FListItemDragDropOpertation>();
 
-	if (DragDropOperation.IsValid ())
+	if(DragDropOperation.IsValid())
 	{
-		if (LayersWidget->LayerManager->SwapMaterials (this->Item, DragDropOperation->OriginWidget->Item))
+		if(LayersWidget->LayerManager->SwapMaterials(this->Item, DragDropOperation->OriginWidget->Item))
 		{
-			LayersWidget->LayerManager->ApplyDisplayedLayers ();
-			LayersWidget->ListViewWidget->RebuildList ();
+			LayersWidget->LayerManager->ApplyDisplayedLayers();
+			LayersWidget->ListViewWidget->RebuildList();
 		}
 
-		return FReply::Handled ();
+		return FReply::Handled();
 	}
 	else
 	{
-		return FReply::Unhandled ();
+		return FReply::Unhandled();
 	}
 }
 
-void SLayerRowWidget::OnDragLeave (const FDragDropEvent& DragDropEvent)
+void SLayerRowWidget::OnDragLeave(const FDragDropEvent& DragDropEvent)
 {
-	TSharedPtr<FListItemDragDropOpertation> DragDropOperation = DragDropEvent.GetOperationAs<FListItemDragDropOpertation> ();
+	TSharedPtr<FListItemDragDropOpertation> DragDropOperation = DragDropEvent.GetOperationAs<FListItemDragDropOpertation>();
 
-	if (DragDropOperation.IsValid ())
+	if(DragDropOperation.IsValid())
 	{
-		this->OnMouseLeave (DragDropEvent);
+		this->OnMouseLeave(DragDropEvent);
 		return;
 	}
 
 }
 
-void FListItemDragDropOpertation::OnDrop (bool bDropWasHandled, const FPointerEvent& MouseEvent)
+void FListItemDragDropOpertation::OnDrop(bool bDropWasHandled, const FPointerEvent& MouseEvent)
 {
-	HideTrash.ExecuteIfBound ();
+	HideTrash.ExecuteIfBound();
 
-	FDragDropOperation::OnDrop (bDropWasHandled, MouseEvent);
+	FDragDropOperation::OnDrop(bDropWasHandled, MouseEvent);
 }
 
-void FListItemDragDropOpertation::OnDragged (const class FDragDropEvent& DragDropEvent)
+void FListItemDragDropOpertation::OnDragged(const class FDragDropEvent& DragDropEvent)
 {
-	if (CursorDecoratorWindow.IsValid ())
+	if(CursorDecoratorWindow.IsValid())
 	{
-		CursorDecoratorWindow->MoveWindowTo (DragDropEvent.GetScreenSpacePosition () - BlockSize * 0.5f);
+		CursorDecoratorWindow->MoveWindowTo(DragDropEvent.GetScreenSpacePosition() - BlockSize * 0.5f);
 	}
 }
 
-TSharedPtr<SWidget> FListItemDragDropOpertation::GetDefaultDecorator () const
+TSharedPtr<SWidget> FListItemDragDropOpertation::GetDefaultDecorator() const
 {
-	return SNew (SBorder).Cursor (EMouseCursor::GrabHandClosed)
+	return SNew(SBorder).Cursor(EMouseCursor::GrabHandClosed)
 		[
-			OriginWidget->AsWidget ()
+			OriginWidget->AsWidget()
 		];
 }
 
-TSharedRef<FListItemDragDropOpertation> FListItemDragDropOpertation::New (SLayerRowWidget* Origin, FSimpleDelegate TrashShowCallback, FSimpleDelegate TrashHideCallback, int32 OriginPosition)
+TSharedRef<FListItemDragDropOpertation> FListItemDragDropOpertation::New(SLayerRowWidget* Origin, FSimpleDelegate TrashShowCallback, FSimpleDelegate TrashHideCallback, int32 OriginPosition)
 {
-	TSharedRef<FListItemDragDropOpertation> Operation = MakeShareable (new FListItemDragDropOpertation);
+	TSharedRef<FListItemDragDropOpertation> Operation = MakeShareable(new FListItemDragDropOpertation);
 
 	Operation->OriginWidget = Origin;
 	Operation->OriginBarPosition = OriginPosition;
 	Operation->ShowTrash = TrashShowCallback;
 	Operation->HideTrash = TrashHideCallback;
 	Operation->bSetForDeletion = false;
-	Operation->BlockSize = FVector2D (32, 32);
+	Operation->BlockSize = FVector2D(32, 32);
 
-	Operation->ShowTrash.ExecuteIfBound ();
+	Operation->ShowTrash.ExecuteIfBound();
 
-	Operation->Construct ();
+	Operation->Construct();
 
 	return Operation;
 }
 
-
-
-
-
+#undef LOCTEXT_NAMESPACE

@@ -12,26 +12,35 @@
 #include "MaterialLayer.generated.h"
 
 UCLASS()
+class UNameList : public UObject
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadOnly, Category = "Properties")
+		TArray<FName> Names;
+};
+
+UCLASS()
 class CONFIGURATION_API UMaterialLayer : public UBaseLayer
 {
 	GENERATED_BODY()
 
 public:
-    UMaterialLayer(const FObjectInitializer& objectInitializer);
-    virtual ~UMaterialLayer();
-    
-    UMaterialLayer* Clone();
-    
-    void Update(AActor* Actor);
-    void Update(UPrimitiveComponent* Primitive);
+	UMaterialLayer(const FObjectInitializer& objectInitializer);
+	virtual ~UMaterialLayer();
 
-	UFUNCTION (BlueprintCallable, Category = "Functions")
+	UMaterialLayer* Clone();
+
+	void Update(AActor* Actor);
+	void Update(UPrimitiveComponent* Primitive);
+
+	UFUNCTION(BlueprintCallable, Category = "Functions")
 		virtual void Apply() override;
-    
-    TMap<FString, TArray<FName>>& GetPrimitiveToMaterialsMap() { return PrimitiveMaterialsMap; }
-    void SetPrimitiveToMaterialsMap(const TMap<FString, TArray<FName>>& InMap) { PrimitiveMaterialsMap = InMap; }
 
-	friend FArchive& operator<<(FArchive &Ar, UMaterialLayer &MaterialLayer)
+	TMap<FString, UNameList*>& GetPrimitiveToMaterialsMap() { return PrimitiveMaterialsMap; }
+	void SetPrimitiveToMaterialsMap(const TMap<FString, UNameList*>& InMap) { PrimitiveMaterialsMap = InMap; }
+
+	/*friend FArchive& operator<<(FArchive &Ar, UMaterialLayer &MaterialLayer)
 	{
 		Ar << MaterialLayer.LayerName;
 		Ar << MaterialLayer.bEnabled;
@@ -39,14 +48,17 @@ public:
 		Ar << MaterialLayer.PrimitiveMaterialsMap;
 
 		return Ar;
-	}
-    
+	}*/
+
+	UPROPERTY(VisibleAnywhere, Category = "Properties")
+		TMap<FString, UNameList*> PrimitiveMaterialsMap;
+
 private:
-    void ApplyToStaticMesh();
-    void ApplyToSkeletalMesh();
-    
-    void ApplyToPrimitiveComponent(UPrimitiveComponent* Primitive, const TArray<class UMaterialInterface*> Materials);
-    
+	void ApplyToStaticMesh();
+	void ApplyToSkeletalMesh();
+
+	void ApplyToPrimitiveComponent(UPrimitiveComponent* Primitive, const TArray<class UMaterialInterface*> Materials);
+
 private:
-    TMap<FString, TArray<FName>> PrimitiveMaterialsMap;
+
 };

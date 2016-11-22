@@ -9,3 +9,7 @@
 #include "ConfigurationPrivatePCH.h"
 
 #include "LayerWidgetStyle.h"
+
+#define LOCTEXT_NAMESPACE "FConfigurationModule"
+
+#undef LOCTEXT_NAMESPACE

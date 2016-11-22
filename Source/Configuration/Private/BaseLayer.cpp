@@ -5,6 +5,8 @@
 #include "Configuration.h"
 #include "BaseLayer.h"
 
+#define LOCTEXT_NAMESPACE "FConfigurationModule"
+
 UBaseLayer::UBaseLayer(const FObjectInitializer& ObjectInitializer):
 	Super(ObjectInitializer){}
 
@@ -30,5 +32,7 @@ void UBaseLayer::SetEnabled (bool InEnabled)
 {
 	bEnabled = InEnabled;
 	OnEnabledChanged.ExecuteIfBound ();
+	MarkPackageDirty();
 }
 
+#undef LOCTEXT_NAMESPACE

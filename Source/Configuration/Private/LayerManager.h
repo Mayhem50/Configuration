@@ -11,63 +11,65 @@
 #include "LayerManager.generated.h"
 
 UCLASS()
-class CONFIGURATION_API ULayerManager : public UObject
+class CONFIGURATION_API ULayerManager : public UDataAsset
 {
 	GENERATED_BODY()
 
 public:
-    ULayerManager();
-    ~ULayerManager();
-    
-    void Init();
-    
-    void OnApplyObjectOnActor(UObject* Object, AActor* Actor);
-	void OnUndoRedo (struct FUndoSessionContext Context, bool bCanRedo);
-    void OnObjectModified(UObject* Object);
-	void OnObjectPropertyChanged (UObject* Object, FPropertyChangedEvent& PropertyChangedEvent);
-	    
-    void OnLayerEnabledChanged();
+	ULayerManager();
+	~ULayerManager();
 
-	void ApplyDisplayedLayers ();
-    
-    TArray<class UMaterialLayer*>& GetLayers() { return Layers; }
+	void Init();
 
-	class UMaterialLayer* GetCurrentLayer () { return CurrentLayer; }
-	void SetCurentLayer (class UMaterialLayer* Layer);
-    
-    void AddLayer();
-    void RemoveLayer(class UMaterialLayer* MaterialLayer);
-    void Duplicate(class UMaterialLayer* MaterialLayer);
-    
-    void Save();
+	void OnApplyObjectOnActor(UObject* Object, AActor* Actor);
+	void OnUndoRedo(struct FUndoSessionContext Context, bool bCanRedo);
+	void OnObjectModified(UObject* Object);
+	void OnObjectPropertyChanged(UObject* Object, FPropertyChangedEvent& PropertyChangedEvent);
 
-	bool SwapMaterials (UMaterialLayer* Layer1, UMaterialLayer* Layer2);
+	void OnLayerEnabledChanged();
 
-	virtual void PreEditUndo () override;
-	virtual void PostEditUndo () override;
+	void ApplyDisplayedLayers();
 
-	DECLARE_DELEGATE (FOnCreateNewLayerFromDrag)
-		FOnCreateNewLayerFromDrag OnCreateNewLayerFromDrag;
+	TArray<class UMaterialLayer*>& GetLayers() { return Layers; }
 
-	DECLARE_DELEGATE (FOnPostEditUndo)
-		FOnPostEditUndo OnPostEditUndo;
+	class UMaterialLayer* GetCurrentLayer() { return CurrentLayer; }
+	void SetCurentLayer(class UMaterialLayer* Layer);
 
-	DECLARE_DELEGATE (FOnLayersManagerNotify)
+	void AddLayer();
+	void RemoveLayer(class UMaterialLayer* MaterialLayer);
+	void Duplicate(class UMaterialLayer* MaterialLayer);
+
+	void Save();
+
+	bool SwapMaterials(UMaterialLayer* Layer1, UMaterialLayer* Layer2);
+
+	virtual void PreEditUndo() override;
+	virtual void PostEditUndo() override;
+
+	DECLARE_DELEGATE(FOnCreateNewLayerFromDrag)
+	FOnCreateNewLayerFromDrag OnCreateNewLayerFromDrag;
+
+	DECLARE_DELEGATE(FOnPostEditUndo)
+	FOnPostEditUndo OnPostEditUndo;
+
+	DECLARE_DELEGATE(FOnLayersManagerNotify)
 	FOnLayersManagerNotify OnLayersManagerNotify;
-		    
-private:
-	void ParseAllActors (class UMaterialLayer* Layer);
-	void ShouldCreateLayer ();
-
-	bool ActorExistInCurrentLayer (AActor* Actor);
-
-	void CommitBeforeChange (const FString& String);
-
-	void UpdateFromObject (UObject* Object);
 
 	UPROPERTY()
 		TArray<class UMaterialLayer*> Layers;
 
 	UPROPERTY()
 		class UMaterialLayer* CurrentLayer;
+
+
+private:
+	void ParseAllActors(class UMaterialLayer* Layer);
+	void ShouldCreateLayer();
+
+	bool ActorExistInCurrentLayer(AActor* Actor);
+
+	void CommitBeforeChange(const FString& String);
+
+	void UpdateFromObject(UObject* Object);
+
 };

@@ -5,6 +5,8 @@
 #include "SlateGameResources.h"
 #include "IPluginManager.h"
 
+#define LOCTEXT_NAMESPACE "FConfigurationModule"
+
 TSharedPtr< FSlateStyleSet > FConfigurationStyle::StyleInstance = NULL;
 
 void FConfigurationStyle::Initialize()
@@ -67,3 +69,5 @@ const ISlateStyle& FConfigurationStyle::Get()
 {
 	return *StyleInstance;
 }
+
+#undef LOCTEXT_NAMESPACE

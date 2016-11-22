@@ -45,6 +45,8 @@ public class Configuration : ModuleRules
 				"Slate",
 				"SlateCore",
                 "ContentBrowser",
+                "AssetTools",
+                "AssetRegistry",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
