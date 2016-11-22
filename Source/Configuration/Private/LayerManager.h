@@ -51,12 +51,19 @@ public:
 
 	DECLARE_DELEGATE (FOnPostEditUndo)
 		FOnPostEditUndo OnPostEditUndo;
+
+	DECLARE_DELEGATE (FOnLayersManagerNotify)
+	FOnLayersManagerNotify OnLayersManagerNotify;
 		    
 private:
 	void ParseAllActors (class UMaterialLayer* Layer);
 	void ShouldCreateLayer ();
 
 	bool ActorExistInCurrentLayer (AActor* Actor);
+
+	void CommitBeforeChange (const FString& String);
+
+	void UpdateFromObject (UObject* Object);
 
 	UPROPERTY()
 		TArray<class UMaterialLayer*> Layers;

@@ -12,7 +12,7 @@
 
 void SLayersWidget::Construct(const SLayersWidget::FArguments &Args){
     LayerManager = Args._LayerManager;
-	LayerManager->OnPostEditUndo.BindRaw (this, &SLayersWidget::OnLayersManagerPostEditUndo);
+	LayerManager->OnLayersManagerNotify.BindRaw (this, &SLayersWidget::OnLayersManagerNotify);
     
     ChildSlot
     [
@@ -79,8 +79,10 @@ void SLayersWidget::Construct(const SLayersWidget::FArguments &Args){
     }
 }
 
-void SLayersWidget::OnLayersManagerPostEditUndo () 
+void SLayersWidget::OnLayersManagerNotify ()
 {
+	ListViewWidget->RebuildList ();
+
 	if (LayerManager->GetCurrentLayer ())
 	{
 		ListViewWidget->SetSelection (LayerManager->GetCurrentLayer (), ESelectInfo::Direct);
@@ -129,10 +131,10 @@ void SLayersWidget::OnSelectionChanged(UMaterialLayer* Item, ESelectInfo::Type S
 		return;
 	}
 
-	if(SelectionType != ESelectInfo::Direct)
-		LayerManager->SetCurentLayer (SelectedMaterialLayer);  
-
-	LayerManager->ApplyDisplayedLayers ();
+	if (SelectionType != ESelectInfo::Direct) {
+		LayerManager->SetCurentLayer (SelectedMaterialLayer);
+		LayerManager->ApplyDisplayedLayers ();
+	}
 }
 
 void SLayersWidget::OnTextChanged(const FText &InText, UMaterialLayer* Item){

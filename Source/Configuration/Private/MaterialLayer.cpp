@@ -46,6 +46,7 @@ void UMaterialLayer::Update(AActor* Actor)
         PrimitiveMaterialsMap.Add (StaticMeshActor->GetName ());
         
         for(auto Material : Materials){
+			LogText (GetObjPath (Material).ToString());
             PrimitiveMaterialsMap[StaticMeshActor->GetName()].Add(GetObjPath(Material));
         }
     }

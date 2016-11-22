@@ -19,38 +19,38 @@
 #include "Classes/Editor/Transactor.h"
 #include "ScopedTransaction.h"
 
-ULayerManager::ULayerManager()
+ULayerManager::ULayerManager ()
 {
 	SetFlags (RF_Transactional);
 }
 
-ULayerManager::~ULayerManager()
+ULayerManager::~ULayerManager ()
 {
-    
+
 }
 
-void ULayerManager::Init(){
-    TArray<uint8> BinaryArray;
+void ULayerManager::Init () {
+	TArray<uint8> BinaryArray;
 	BinaryArray.Init (0, 0);
-    
-    FString FilePath = FPaths::Combine(*FPaths::GamePluginsDir(), TEXT("Configuration"), TEXT("Content"), TEXT("ConfData.dat"));
-    
+
+	FString FilePath = FPaths::Combine (*FPaths::GamePluginsDir (), TEXT ("Configuration"), TEXT ("Content"), TEXT ("ConfData.dat"));
+
 	LogText (FilePath);
-    
-    if(FPaths::FileExists(FilePath)){
+
+	if (FPaths::FileExists (FilePath)) {
 		Layers.Empty ();
-        FFileHelper::LoadFileToArray(BinaryArray, *FilePath);
-        
-        if(BinaryArray.Num() > 0){
-            FMemoryReader Reader = FMemoryReader(BinaryArray, true);
-            
-            while(!Reader.AtEnd()){
-                UMaterialLayer* Layer = NewObject<UMaterialLayer>();
-                Reader << *Layer;
+		FFileHelper::LoadFileToArray (BinaryArray, *FilePath);
+
+		if (BinaryArray.Num () > 0) {
+			FMemoryReader Reader = FMemoryReader (BinaryArray, true);
+
+			while (!Reader.AtEnd ()) {
+				UMaterialLayer* Layer = NewObject<UMaterialLayer> ();
+				Reader << *Layer;
 				//Layer->Serialize (Reader);
-                //Layer->OnEnabledChanged.BindUObject (this, &ULayerManager::OnLayerEnabledChanged);
-                Layers.Add(Layer);
-            }
+				//Layer->OnEnabledChanged.BindUObject (this, &ULayerManager::OnLayerEnabledChanged);
+				Layers.Add (Layer);
+			}
 
 			CurrentLayer = Layers.Last ();
 			Layers.RemoveAt (Layers.Num () - 1);
@@ -63,14 +63,14 @@ void ULayerManager::Init(){
 					break;
 				}
 			}
-        }
-    }
-    else{
-        AddLayer();
-        CurrentLayer = Layers[0];
+		}
+	}
+	else {
+		AddLayer ();
+		CurrentLayer = Layers[0];
 		ParseAllActors (CurrentLayer);
-        Save();
-    }
+		Save ();
+	}
 
 	UTransBuffer* Transbuffer = Cast<UTransBuffer> (GEditor->Trans);
 
@@ -95,6 +95,8 @@ void ULayerManager::OnUndoRedo (FUndoSessionContext Context, bool bCanRedo)
 	TArray<UObject*> Objects;
 	Transaction->GetTransactionObjects (Objects);
 
+	bool bNeedSave = false;
+
 	for (UObject* Object : Objects)
 	{
 		UObject* Outer = Object->GetOuter ();
@@ -107,8 +109,13 @@ void ULayerManager::OnUndoRedo (FUndoSessionContext Context, bool bCanRedo)
 			if (StaticMeshActor || SkeletalMeshActor)
 			{
 				CurrentLayer->Update (Cast<AActor> (Outer));
+				bNeedSave = true;
 			}
 		}
+	}
+
+	if (bNeedSave) {
+		Save ();
 	}
 }
 
@@ -151,56 +158,66 @@ void ULayerManager::ParseAllActors (UMaterialLayer* Layer)
 	}
 }
 
-void ULayerManager::Save(){
+void ULayerManager::Save () {
 	if (Layers.Num () == 0 && !CurrentLayer)
 	{
 		return;
 	}
 
-    FBufferArchive BufferArchive;
-    
-    for(auto Layer : Layers){
-        BufferArchive << *Layer;
+	FBufferArchive BufferArchive;
+
+	for (auto Layer : Layers) {
+		BufferArchive << *Layer;
 		//Layer->Serialize (BufferArchive);
-    }
+	}
 
 	BufferArchive << *CurrentLayer;
-    
-    if(BufferArchive.Num() > 0){
-        FString FilePath = FPaths::Combine(*FPaths::GamePluginsDir(), TEXT("Configuration"), TEXT("Content"), TEXT("ConfData.dat"));
-        LogText(FilePath);
-        FFileHelper::SaveArrayToFile(BufferArchive, *FilePath);
-    }
+
+	if (BufferArchive.Num () > 0) {
+		FString FilePath = FPaths::Combine (*FPaths::GamePluginsDir (), TEXT ("Configuration"), TEXT ("Content"), TEXT ("ConfData.dat"));
+		LogText (FilePath);
+		FFileHelper::SaveArrayToFile (BufferArchive, *FilePath);
+	}
 }
 
-void ULayerManager::AddLayer(){
-    UMaterialLayer* Layer = NewObject<UMaterialLayer>();
+void ULayerManager::AddLayer () {
+	CommitBeforeChange ("Add Layer");
+	UMaterialLayer* Layer = NewObject<UMaterialLayer> ();
 	Layer->Init (ELayerEnum::MATERIAL, "Layer_" + FString::FromInt (Layers.Num ()));
-    //Layer->OnEnabledChanged.BindUObject(this, &ULayerManager::OnLayerEnabledChanged);
-    Layers.Add(Layer);
+	//Layer->OnEnabledChanged.BindUObject(this, &ULayerManager::OnLayerEnabledChanged);
+	Layers.Add (Layer);
+	Save ();
 }
 
-void ULayerManager::RemoveLayer(UMaterialLayer* MaterialLayer){
-    if(MaterialLayer == nullptr || Layers.Num() == 1){ return; }
-    
-    Layers.Remove(MaterialLayer);
+void ULayerManager::RemoveLayer (UMaterialLayer* MaterialLayer) {
+	if (MaterialLayer == nullptr || Layers.Num () == 1) { return; }
+
+	CommitBeforeChange ("Remove Layer");
+	Layers.Remove (MaterialLayer);
+	Save ();
 }
 
-void ULayerManager::Duplicate(UMaterialLayer* MaterialLayer){
-    if(!MaterialLayer){ return; }
-    
-    Layers.Add(MaterialLayer->Clone());
+void ULayerManager::Duplicate (UMaterialLayer* MaterialLayer) {
+	if (!MaterialLayer) { return; }
+
+	CommitBeforeChange ("Duplicate Layer");
+	Layers.Add (MaterialLayer->Clone ());
+	Save ();
 }
 
-void ULayerManager::OnObjectModified(UObject* Object){
-    if(!CurrentLayer){ return; }
+void ULayerManager::OnObjectModified (UObject* Object) {
+	if (!CurrentLayer) { return; }
 
+	UpdateFromObject (Object);
+}
+
+void ULayerManager::UpdateFromObject (UObject* Object) {
 	UObject* Outer = Object->GetOuter ();
 
 	AStaticMeshActor* StaticMeshActor = Cast<AStaticMeshActor> (Outer);
 
-	if (StaticMeshActor) 
-	{	
+	if (StaticMeshActor)
+	{
 		CurrentLayer->Update (StaticMeshActor);
 		LogText ("On Object Modify " + StaticMeshActor->GetName ());
 		Save ();
@@ -208,17 +225,17 @@ void ULayerManager::OnObjectModified(UObject* Object){
 	}
 
 	ASkeletalMeshActor* SkeletalMeshActor = Cast<ASkeletalMeshActor> (Outer);
-    
+
 	if (SkeletalMeshActor)
 	{
 		CurrentLayer->Update (SkeletalMeshActor);
 		LogText ("On Object Modify " + SkeletalMeshActor->GetName ());
 		Save ();
 		return;
-	}    
+	}
 }
 
-void ULayerManager::OnLayerEnabledChanged(){
+void ULayerManager::OnLayerEnabledChanged () {
 	ApplyDisplayedLayers ();
 }
 
@@ -238,8 +255,9 @@ bool ULayerManager::SwapMaterials (UMaterialLayer* Layer1, UMaterialLayer* Layer
 	int32 idx1 = Layers.Find (Layer1);
 	int32 idx2 = Layers.Find (Layer2);
 
-	if (idx1 > 0 && idx2 > 0)
+	if (idx1 >= 0 && idx2 >= 0)
 	{
+		CommitBeforeChange ("Swap Layers");
 		Layers[idx1] = Layer2;
 		Layers[idx2] = Layer1;
 
@@ -253,32 +271,45 @@ bool ULayerManager::SwapMaterials (UMaterialLayer* Layer1, UMaterialLayer* Layer
 
 void ULayerManager::OnObjectPropertyChanged (UObject* Object, FPropertyChangedEvent& PropertyChangedEvent)
 {
-	FName PropertyName = (PropertyChangedEvent.Property != nullptr) ? PropertyChangedEvent.Property->GetFName () : NAME_None;
+	static int32 ObjectCount = 0;
 
-	ShouldCreateLayer ();
+	TSet<UObject*> Objects =  FCoreUObjectDelegates::ObjectsModifiedThisFrame;
+
+	FName PropertyName = (PropertyChangedEvent.Property != nullptr) ? PropertyChangedEvent.Property->GetFName () : NAME_None;
 
 	if (PropertyName == "OverrideMaterials")
 	{
-		LogText ("On Object Property Changed");
+		if (GEditor->GetSelectedActorCount () == 1 || (GEditor->GetSelectedActorCount () > 1 && ObjectCount == 0)) {
+			ShouldCreateLayer ();
+			++ObjectCount;
+		}
+		else {
+			++ObjectCount;
+		}
+
+		if (GEditor->GetSelectedActorCount () == ObjectCount) {
+			ObjectCount = 0;
+		}
+
+		LogText ("On Object Property Changed on : " + Object->GetName());
+		UpdateFromObject (Object);
+	}
+}
+
+void ULayerManager::OnApplyObjectOnActor (UObject* Object, AActor* Actor)
+{
+	if (!CurrentLayer) { return; }
+
+	ShouldCreateLayer ();
+
+	UMaterialInterface* Material = Cast<UMaterialInterface> (Object);
+
+	if (Material)
+	{
+		CurrentLayer->Update (Actor);
 	}
 
 	Save ();
-}
-
-void ULayerManager::OnApplyObjectOnActor(UObject* Object, AActor* Actor)
-{
-    if(!CurrentLayer){ return; }	
-
-	ShouldCreateLayer ();
-    
-    UMaterialInterface* Material = Cast<UMaterialInterface>(Object);
-    
-    if(Material)
-    {
-        CurrentLayer->Update(Actor);
-    }
-    
-    Save();
 }
 
 void ULayerManager::ShouldCreateLayer ()
@@ -289,13 +320,13 @@ void ULayerManager::ShouldCreateLayer ()
 	{
 		AddLayer ();
 		CurrentLayer = Layers.Last ();
+		OnLayersManagerNotify.ExecuteIfBound ();
 	}
 }
 
 void ULayerManager::SetCurentLayer (UMaterialLayer* Layer)
 {
-	const FScopedTransaction Transaction (FText::FromString("Change Current Layer"));
-	this->Modify ();
+	CommitBeforeChange ("Change Current Layer");
 	CurrentLayer = Layer;
 }
 
@@ -311,4 +342,11 @@ void ULayerManager::PostEditUndo ()
 	LogText (CurrentLayer->LayerName);
 
 	OnPostEditUndo.ExecuteIfBound ();
+	OnLayersManagerNotify.ExecuteIfBound ();
+}
+
+void ULayerManager::CommitBeforeChange (const FString& String)
+{
+	const FScopedTransaction Transaction (TEXT ("LayerManager"), FText::FromString (String), nullptr);
+	this->Modify ();
 }
