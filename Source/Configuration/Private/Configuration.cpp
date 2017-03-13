@@ -84,7 +84,7 @@ void FConfigurationModule::OnInit()
 
 void FConfigurationModule::InitVariantManager()
 {
-	UPackage* Package = LoadPackage(nullptr, TEXT("/ConfigurationModule/Datas/Variants"), LOAD_None);
+	/*UPackage* Package = LoadPackage(nullptr, TEXT("/ConfigurationModule/Datas/Variants"), LOAD_None);
 
 	if(!Package)
 	{
@@ -104,7 +104,7 @@ void FConfigurationModule::InitVariantManager()
 		VariantManager = FindObject<UVariantManager>(Package, TEXT("Layers"));
 	}
 
-	VariantManager->AddToRoot();
+	VariantManager->AddToRoot();*/
 }
 
 void FConfigurationModule::InitLayerManager()
